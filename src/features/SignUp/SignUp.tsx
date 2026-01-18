@@ -56,12 +56,46 @@ const SignupForm = ({ role }: SignupFormProps) => {
     },
   });
 
-  // Submit handler
-  function onSubmit(values: z.infer<typeof signupFormSchema>) {
-    console.log({
-      role: role,
-      ...values,
-    });
+  // Submit handler with API call
+  async function onSubmit(values: z.infer<typeof signupFormSchema>) {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACK_END_URL}/auth/signup`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            role: role,
+            ...values,
+          }),
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Server side error (validation, duplicate email etc)
+        throw new Error(data.message || "Signup failed. Please try again.");
+      }
+
+      // Success case
+      console.log("Signup successful:", data);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error("Signup error:", error);
+
+        form.setError("root", {
+          type: "manual",
+          message:
+            error.message || "Something went wrong. Please try again later.",
+        });
+      } else {
+        console.log("Something went wrong");
+      }
+    }
   }
 
   return (
