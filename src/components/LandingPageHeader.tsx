@@ -1,5 +1,6 @@
 import React from "react";
 import { Button } from "./ui/button";
+import Link from "next/link";
 
 const LandingPageHeader = () => {
   return (
@@ -9,8 +10,12 @@ const LandingPageHeader = () => {
       </div>
 
       <div className="flex gap-3 items-center">
-        <Button variant={"outline"}>Sign up</Button>
-        <Button>Sign in</Button>
+        <Link href={"/signup"}>
+          <Button variant={"outline"}>Sign up</Button>
+        </Link>
+        <Link href={"/signin"}>
+          <Button>Sign in</Button>
+        </Link>
       </div>
     </div>
   );
