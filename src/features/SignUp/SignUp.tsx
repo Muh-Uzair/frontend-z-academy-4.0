@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -26,12 +26,12 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
 
-// Student Form Schema
-const studentFormSchema = z.object({
+// Form Schema
+const signupFormSchema = z.object({
   fullName: z.string().min(2, {
     message: "Full name must be at least 2 characters.",
   }),
-  email: z.email({
+  email: z.string().email({
     message: "Please enter a valid email address.",
   }),
   password: z.string().min(8, {
@@ -39,54 +39,136 @@ const studentFormSchema = z.object({
   }),
 });
 
-// Instructor Form Schema
-const instructorFormSchema = z.object({
-  fullName: z.string().min(2, {
-    message: "Full name must be at least 2 characters.",
-  }),
-  email: z.email({
-    message: "Please enter a valid email address.",
-  }),
-  password: z.string().min(8, {
-    message: "Password must be at least 8 characters long.",
-  }),
-});
+// Props type for SignupForm component
+interface SignupFormProps {
+  role: "student" | "instructor";
+}
 
+// Separate Form Component
+const SignupForm = ({ role }: SignupFormProps) => {
+  // Form initialization
+  const form = useForm<z.infer<typeof signupFormSchema>>({
+    resolver: zodResolver(signupFormSchema),
+    defaultValues: {
+      fullName: "",
+      email: "",
+      password: "",
+    },
+  });
+
+  // Submit handler
+  function onSubmit(values: z.infer<typeof signupFormSchema>) {
+    console.log({
+      role: role,
+      ...values,
+    });
+  }
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {/* Full Name Field */}
+        <FormField
+          control={form.control}
+          name="fullName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Full Name</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder={
+                    role === "student" ? "John Doe" : "Dr. Jane Smith"
+                  }
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>
+                {role === "student"
+                  ? "Your full name as you'd like it displayed."
+                  : "Your full name as you'd like it displayed to students."}
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Email Field */}
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder={
+                    role === "student"
+                      ? "john@example.com"
+                      : "jane@university.edu"
+                  }
+                  type="email"
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>
+                {role === "student"
+                  ? "We'll send a confirmation email here."
+                  : "We'll send a verification email here."}
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Password Field */}
+        <FormField
+          control={form.control}
+          name="password"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Password</FormLabel>
+              <FormControl>
+                <Input placeholder="••••••••" type="password" {...field} />
+              </FormControl>
+              <FormDescription>
+                Must be at least 8 characters long.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Submit Button */}
+        <Button type="submit" className="w-full">
+          {role === "student" ? "Sign Up as Student" : "Sign Up as Instructor"}
+        </Button>
+
+        <Button variant="outline" className="w-full" type="button">
+          Sign Up with Google
+        </Button>
+      </form>
+    </Form>
+  );
+};
+
+// Main SignUp Component
 const SignUp = () => {
-  // Student Form
-  const studentForm = useForm<z.infer<typeof studentFormSchema>>({
-    resolver: zodResolver(studentFormSchema),
-    defaultValues: {
-      fullName: "",
-      email: "",
-      password: "",
-    },
-  });
+  // State to track user role
+  const [userRole, setUserRole] = useState<"student" | "instructor">("student");
 
-  // Instructor Form
-  const instructorForm = useForm<z.infer<typeof instructorFormSchema>>({
-    resolver: zodResolver(instructorFormSchema),
-    defaultValues: {
-      fullName: "",
-      email: "",
-      password: "",
-    },
-  });
-
-  // Student Submit Handler
-  function onStudentSubmit(values: z.infer<typeof studentFormSchema>) {
-    console.log("Student Sign Up Values:", values);
-  }
-
-  // Instructor Submit Handler
-  function onInstructorSubmit(values: z.infer<typeof instructorFormSchema>) {
-    console.log("Instructor Sign Up Values:", values);
-  }
+  // Handle tab change to update role
+  const handleTabChange = (value: string) => {
+    setUserRole(value as "student" | "instructor");
+  };
 
   return (
     <div className="bg-background flex h-screen items-center justify-center">
       <div className="flex w-full max-w-sm flex-col gap-6">
-        <Tabs defaultValue="student" className="w-full">
+        <Tabs
+          defaultValue="student"
+          className="w-full"
+          onValueChange={handleTabChange}
+        >
           {/* Tabs Header */}
           <TabsList className="min-h-12 w-full border bg-primary-very-light p-1">
             <TabsTrigger
@@ -114,89 +196,7 @@ const SignUp = () => {
               </CardHeader>
 
               <CardContent>
-                <Form {...studentForm}>
-                  <form
-                    onSubmit={studentForm.handleSubmit(onStudentSubmit)}
-                    className="space-y-6"
-                  >
-                    {/* Full Name Field */}
-                    <FormField
-                      control={studentForm.control}
-                      name="fullName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Full Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="John Doe" {...field} />
-                          </FormControl>
-                          <FormDescription>
-                            Your full name as you&apos;d like it displayed.
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    {/* Email Field */}
-                    <FormField
-                      control={studentForm.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="john@example.com"
-                              type="email"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormDescription>
-                            We&apos;ll send a confirmation email here.
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    {/* Password Field */}
-                    <FormField
-                      control={studentForm.control}
-                      name="password"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Password</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="••••••••"
-                              type="password"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormDescription>
-                            Must be at least 8 characters long.
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    {/* Submit Button */}
-                    <Button
-                      onClick={() => {
-                        console.log("Hello");
-                      }}
-                      type="submit"
-                      className="w-full"
-                    >
-                      Sign Up as Student
-                    </Button>
-
-                    <Button variant="outline" className="w-full" type="button">
-                      Sign Up with Google
-                    </Button>
-                  </form>
-                </Form>
+                <SignupForm role={userRole} />
               </CardContent>
 
               <CardFooter className="flex justify-center">
@@ -221,84 +221,7 @@ const SignUp = () => {
               </CardHeader>
 
               <CardContent>
-                <Form {...instructorForm}>
-                  <form
-                    onSubmit={instructorForm.handleSubmit(onInstructorSubmit)}
-                    className="space-y-6"
-                  >
-                    {/* Full Name Field */}
-                    <FormField
-                      control={instructorForm.control}
-                      name="fullName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Full Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Dr. Jane Smith" {...field} />
-                          </FormControl>
-                          <FormDescription>
-                            Your full name as you&apos;d like it displayed to
-                            students.
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    {/* Email Field */}
-                    <FormField
-                      control={instructorForm.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="jane@university.edu"
-                              type="email"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormDescription>
-                            We&apos;ll send a verification email here.
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    {/* Password Field */}
-                    <FormField
-                      control={instructorForm.control}
-                      name="password"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Password</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="••••••••"
-                              type="password"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormDescription>
-                            Must be at least 8 characters long.
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    {/* Submit Button */}
-                    <Button type="submit" className="w-full">
-                      Sign Up as Instructor
-                    </Button>
-
-                    <Button variant="outline" className="w-full" type="button">
-                      Sign Up with Google
-                    </Button>
-                  </form>
-                </Form>
+                <SignupForm role={userRole} />
               </CardContent>
 
               <CardFooter className="flex justify-center">
