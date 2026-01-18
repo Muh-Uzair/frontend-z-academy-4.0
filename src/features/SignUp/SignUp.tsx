@@ -25,6 +25,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 // Form Schema
 const signupFormSchema = z.object({
@@ -55,6 +56,7 @@ const SignupForm = ({ role }: SignupFormProps) => {
       password: "",
     },
   });
+  const router = useRouter();
 
   // Submit handler with API call
   async function onSubmit(values: z.infer<typeof signupFormSchema>) {
@@ -83,6 +85,7 @@ const SignupForm = ({ role }: SignupFormProps) => {
 
       // Success case
       console.log("Signup successful:", data);
+      router.push(`/verify-otp?email=${values?.email}`);
     } catch (error: unknown) {
       if (error instanceof Error) {
         console.error("Signup error:", error);
