@@ -44,8 +44,8 @@ const navigationConfig = {
     },
     { title: "Courses", url: "/dashboard/instructor/courses", icon: BookOpen },
     {
-      title: "My Students",
-      url: "/dashboard/instructor/my-students",
+      title: "Enrollments",
+      url: "/dashboard/instructor/enrollments",
       icon: Users,
     },
     {

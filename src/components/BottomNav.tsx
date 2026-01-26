@@ -36,7 +36,7 @@ const navigationConfig = {
     { title: "Courses", href: "/dashboard/instructor/courses", icon: BookOpen },
     {
       title: "Students",
-      href: "/dashboard/instructor/my-students",
+      href: "/dashboard/instructor/enrollments",
       icon: Users,
     },
     {

@@ -1,7 +1,8 @@
+import DashboardInstructorSettings from "@/features/DashboardInstructorSettings/DashboardInstructorSettings";
 import React from "react";
 
-const DashboardInstructorSettings = () => {
-  return <div>DashboardInstructorSettings</div>;
+const DashboardInstructorSettingsPage = () => {
+  return <DashboardInstructorSettings />;
 };
 
-export default DashboardInstructorSettings;
+export default DashboardInstructorSettingsPage;

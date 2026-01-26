@@ -27,7 +27,7 @@ const DashboardLayout = ({
         <div className="flex flex-1 overflow-hidden">
           <SidebarProvider>
             <AppSidebar role={role} />
-            <main className="flex-1 overflow-y-auto pt-[60px] p-10">
+            <main className="flex-1 overflow-y-auto pt-12.5 px-10">
               {children}
             </main>
           </SidebarProvider>
