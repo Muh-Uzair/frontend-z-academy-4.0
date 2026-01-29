@@ -44,6 +44,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import CreateUpdateCourseDialog from "./CreateUpdateCourseDialog";
 
 // Dummy data based on your Course schema
 const dummyCourses = [
@@ -121,6 +122,90 @@ const dummyCourses = [
     createdAt: new Date("2025-12-05"),
     updatedAt: new Date("2026-01-25"),
   },
+  {
+    _id: "course7",
+    title: "Node.js & Express API Development",
+    description: "Build scalable REST APIs with Node.js, Express & MongoDB",
+    instructor: "someUserId",
+    price: 1799,
+    level: "intermediate",
+    thumbnail: "https://example.com/node-express.jpg",
+    category: "Backend Development",
+    createdAt: new Date("2025-07-18"),
+    updatedAt: new Date("2025-10-12"),
+  },
+  {
+    _id: "course8",
+    title: "MongoDB & Mongoose Deep Dive",
+    description: "Master schema design, aggregation pipelines and performance",
+    instructor: "someUserId",
+    price: 1299,
+    level: "intermediate",
+    thumbnail: "https://example.com/mongodb.jpg",
+    category: "Databases",
+    createdAt: new Date("2025-05-10"),
+    updatedAt: new Date("2025-08-01"),
+  },
+  {
+    _id: "course9",
+    title: "Python for Data Science & Machine Learning",
+    description: "Learn NumPy, Pandas, Scikit-Learn and real-world ML projects",
+    instructor: "someUserId",
+    price: 2999,
+    level: "beginner",
+    thumbnail: "https://example.com/python-ml.jpg",
+    category: "Data Science",
+    createdAt: new Date("2025-04-05"),
+    updatedAt: new Date("2025-09-15"),
+  },
+  {
+    _id: "course10",
+    title: "Cybersecurity Essentials",
+    description: "Learn ethical hacking, network security and best practices",
+    instructor: "someUserId",
+    price: 1899,
+    level: "beginner",
+    thumbnail: "https://example.com/cybersecurity.jpg",
+    category: "Cybersecurity",
+    createdAt: new Date("2025-09-01"),
+    updatedAt: new Date("2025-12-10"),
+  },
+  {
+    _id: "course11",
+    title: "AWS Cloud Practitioner Certification",
+    description: "Prepare for AWS Cloud Practitioner with hands-on labs",
+    instructor: "someUserId",
+    price: 1599,
+    level: "beginner",
+    thumbnail: "https://example.com/aws-cloud.jpg",
+    category: "Cloud Computing",
+    createdAt: new Date("2025-10-20"),
+    updatedAt: new Date("2026-01-05"),
+  },
+  {
+    _id: "course12",
+    title: "Agile & Scrum for Software Teams",
+    description: "Master Agile principles, Scrum ceremonies and team workflows",
+    instructor: "someUserId",
+    price: 999,
+    level: "beginner",
+    thumbnail: "https://example.com/agile-scrum.jpg",
+    category: "Project Management",
+    createdAt: new Date("2025-06-01"),
+    updatedAt: new Date("2025-09-10"),
+  },
+  {
+    _id: "course13",
+    title: "System Design for Backend Engineers",
+    description: "Learn to design scalable, fault-tolerant distributed systems",
+    instructor: "someUserId",
+    price: 3999,
+    level: "advanced",
+    thumbnail: "https://example.com/system-design.jpg",
+    category: "Software Architecture",
+    createdAt: new Date("2025-11-20"),
+    updatedAt: new Date("2026-01-15"),
+  },
 ];
 
 export default function DashboardInstructorCourses() {
@@ -128,7 +213,8 @@ export default function DashboardInstructorCourses() {
   const [levelFilter, setLevelFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 10;
+  const [open, setOpen] = useState(false);
 
   // Simple client-side filtering
   const filteredCourses = dummyCourses.filter((course) => {
@@ -160,10 +246,9 @@ export default function DashboardInstructorCourses() {
               Manage and view all your created courses
             </CardDescription>
           </div>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Create New Course
-          </Button>
+
+          {/* Dialog Trigger Button */}
+          <CreateUpdateCourseDialog open={open} setOpen={setOpen} />
         </CardHeader>
 
         <CardContent>
@@ -228,12 +313,24 @@ export default function DashboardInstructorCourses() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Level</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="bg-primary rounded-tl-md text-white">
+                    Title
+                  </TableHead>
+                  <TableHead className="bg-primary  text-white">
+                    Category
+                  </TableHead>
+                  <TableHead className="bg-primary  text-white">
+                    Level
+                  </TableHead>
+                  <TableHead className="bg-primary  text-white">
+                    Price
+                  </TableHead>
+                  <TableHead className="bg-primary  text-white">
+                    Created
+                  </TableHead>
+                  <TableHead className="text-right bg-primary  text-white rounded-tr-md">
+                    Actions
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
