@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useTransition } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -25,6 +25,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
+import { signUpAction } from "./signup-action";
+import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
 // Form Schema
@@ -40,15 +42,17 @@ const signupFormSchema = z.object({
   }),
 });
 
+export type SignupFormSchemaType = z.infer<typeof signupFormSchema>;
+
 // Props type for SignupForm component
 interface SignupFormProps {
   role: "student" | "instructor";
 }
 
-// Separate Form Component
+// CMP CMP CMP
 const SignupForm = ({ role }: SignupFormProps) => {
-  // Form initialization
-  const form = useForm<z.infer<typeof signupFormSchema>>({
+  // VARS
+  const form = useForm<SignupFormSchemaType>({
     resolver: zodResolver(signupFormSchema),
     defaultValues: {
       fullName: "",
@@ -56,51 +60,33 @@ const SignupForm = ({ role }: SignupFormProps) => {
       password: "",
     },
   });
+  const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
-  // Submit handler with API call
+  // FUNCTIONS
   async function onSubmit(values: z.infer<typeof signupFormSchema>) {
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACK_END_URL}/auth/signup`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            role: role,
-            ...values,
-          }),
-        },
-      );
+    startTransition(async () => {
+      const dataWithRole = {
+        ...values,
+        role: role,
+      };
 
-      const data = await response.json();
+      const result = await signUpAction(dataWithRole);
 
-      if (!response.ok) {
-        // Server side error (validation, duplicate email etc)
-        throw new Error(data.message || "Signup failed. Please try again.");
-      }
-
-      // Success case
-      console.log("Signup successful:", data);
-      router.push(`/verify-otp?email=${values?.email}`);
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error("Signup error:", error);
-
+      if (result.status === "error" || result.status === "fail") {
+        toast.error(result.message);
         form.setError("root", {
           type: "manual",
-          message:
-            error.message || "Something went wrong. Please try again later.",
+          message: result.message,
         });
-      } else {
-        console.log("Something went wrong");
+      } else if (result.status === "success") {
+        toast.success("Signup successful");
+        router.push(`/verify-otp?email=${values.email}`);
       }
-    }
+    });
   }
 
+  // JSX JSX JSX
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -176,7 +162,7 @@ const SignupForm = ({ role }: SignupFormProps) => {
         />
 
         {/* Submit Button */}
-        <Button type="submit" className="w-full">
+        <Button loading={isPending} type="submit" className="w-full">
           {role === "student" ? "Sign Up as Student" : "Sign Up as Instructor"}
         </Button>
 
@@ -188,16 +174,19 @@ const SignupForm = ({ role }: SignupFormProps) => {
   );
 };
 
-// Main SignUp Component
+// DIVIDER -----------------------------------------------------------------------
+
+// CMP CMP CMP
 const SignUp = () => {
-  // State to track user role
+  // VARS
   const [userRole, setUserRole] = useState<"student" | "instructor">("student");
 
-  // Handle tab change to update role
+  // FUNCTIONS
   const handleTabChange = (value: string) => {
     setUserRole(value as "student" | "instructor");
   };
 
+  // JSX JSX JSX
   return (
     <div className="bg-background flex h-screen items-center justify-center">
       <div className="flex w-full max-w-sm flex-col gap-6">
