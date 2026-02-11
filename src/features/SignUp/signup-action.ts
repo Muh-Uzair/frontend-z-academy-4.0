@@ -1,17 +1,11 @@
 "use server";
 
+import { ApiResponse } from "@/types/api-repose-types";
 import { SignupFormSchemaType } from "./SignUp";
-
-interface SignupResponse {
-  status: "success" | "error" | "fail";
-  message: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  data?: any;
-}
 
 export const signUpAction = async (
   values: SignupFormSchemaType & { role: "student" | "instructor" },
-): Promise<SignupResponse> => {
+): Promise<ApiResponse> => {
   try {
     const response = await fetch(`${process.env.BACK_END_URL}/auth/signup`, {
       method: "POST",

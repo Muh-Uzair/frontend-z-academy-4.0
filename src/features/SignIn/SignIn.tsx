@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useTransition } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -23,10 +23,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
+import { signInAction } from "./signin-action";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 // SignIn Form Schema
 const signinFormSchema = z.object({
-  email: z.string().email({
+  email: z.email({
     message: "Please enter a valid email address.",
   }),
   password: z.string().min(1, {
@@ -34,44 +37,36 @@ const signinFormSchema = z.object({
   }),
 });
 
+export type SigninFormSchemaType = z.infer<typeof signinFormSchema>;
+
 // SignIn Form Component
 const SignInForm = () => {
   // Form initialization
-  const form = useForm<z.infer<typeof signinFormSchema>>({
+  const form = useForm<SigninFormSchemaType>({
     resolver: zodResolver(signinFormSchema),
     defaultValues: {
       email: "",
       password: "",
     },
   });
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
-  // Submit handler
-  async function onSubmit(values: z.infer<typeof signinFormSchema>) {
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACK_END_URL}/auth/signin`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify(values),
-        },
-      );
+  async function onSubmit(values: SigninFormSchemaType) {
+    startTransition(async () => {
+      const data = {
+        ...values,
+      };
 
-      const data = await response.json();
+      const result = await signInAction(data);
 
-      if (!response.ok) {
-        throw new Error(
-          data.message || "Login failed. Please check your credentials.",
-        );
+      if (result.status === "error" || result.status === "fail") {
+        toast.error(result.message);
+      } else if (result.status === "success") {
+        toast.success("Signin successful");
+        router.push(`/dashboard/${result?.data?.user?.role}/dashboard`);
       }
-
-      console.log("Login successful:", data);
-    } catch (error: unknown) {
-      console.error("Login error:", error);
-    }
+    });
   }
 
   // Handle Google Sign In
@@ -121,7 +116,7 @@ const SignInForm = () => {
         />
 
         {/* Submit Button */}
-        <Button type="submit" className="w-full">
+        <Button loading={isPending} type="submit" className="w-full">
           Sign in
         </Button>
 

@@ -75,10 +75,6 @@ const SignupForm = ({ role }: SignupFormProps) => {
 
       if (result.status === "error" || result.status === "fail") {
         toast.error(result.message);
-        form.setError("root", {
-          type: "manual",
-          message: result.message,
-        });
       } else if (result.status === "success") {
         toast.success("Signup successful");
         router.push(`/verify-otp?email=${values.email}`);
