@@ -55,13 +55,18 @@ const navigationConfig = {
     },
   ],
   student: [
-    { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-    { title: "Courses", url: "/dashboard/courses", icon: BookOpen },
-    { title: "Settings", url: "/dashboard/settings", icon: Settings },
+    {
+      title: "Dashboard",
+      url: "/dashboard/student/dashboard",
+      icon: LayoutDashboard,
+    },
+    { title: "Courses", url: "/dashboard/student/courses", icon: BookOpen },
+    { title: "Settings", url: "/dashboard/student/settings", icon: Settings },
   ],
 };
 
 export default function AppSidebar({ role }: AppSidebarProps) {
+  // console.log("role ------------------------------", role);
   const pathname = usePathname();
   const items = navigationConfig[role];
 

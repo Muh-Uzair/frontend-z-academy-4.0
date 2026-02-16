@@ -73,6 +73,7 @@ function Button({
       {loading ? (
         <>
           <Spinner className={`${spinnerClassName}`} />
+          {children}
         </>
       ) : (
         children

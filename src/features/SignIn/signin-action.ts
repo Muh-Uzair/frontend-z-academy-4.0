@@ -49,7 +49,7 @@ export const signInAction = async ({
         cookieStore.set(name.trim(), value, options);
       });
     }
-    
+
     const data = await response.json();
 
     if (!response.ok) {

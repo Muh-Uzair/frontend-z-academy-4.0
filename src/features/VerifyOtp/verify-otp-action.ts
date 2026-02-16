@@ -1,6 +1,6 @@
 "use server";
 
-import { ApiResponse } from "@/types/api-repose-types";
+import { ApiResponse } from "@/types/api-response-types";
 
 export async function verifyOtpAction(payload: {
   email: string;

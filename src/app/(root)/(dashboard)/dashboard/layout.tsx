@@ -10,7 +10,7 @@ export default function DashboardLayout({
   // - Database query
   // - Server component props
   // For now, we'll use a default role
-  const role: "academy" | "instructor" | "student" = "instructor";
+  const role: "academy" | "instructor" | "student" = "student";
 
   return (
     <DashboardLayoutComponent role={role}>{children}</DashboardLayoutComponent>

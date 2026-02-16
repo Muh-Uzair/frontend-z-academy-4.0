@@ -1,7 +1,8 @@
+import DashboardStudentCourses from "@/features/DashboardStudentCourses/DashboardStudentCourses";
 import React from "react";
 
-const DashboardStudentCourses = () => {
-  return <div>DashboardStudentCourses</div>;
+const DashboardStudentCoursesPage = () => {
+  return <DashboardStudentCourses />;
 };
 
-export default DashboardStudentCourses;
+export default DashboardStudentCoursesPage;

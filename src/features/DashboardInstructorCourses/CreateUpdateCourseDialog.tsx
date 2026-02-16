@@ -1,7 +1,7 @@
 // components/CreateUpdateCourseDialog.tsx
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useTransition } from "react";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +31,8 @@ import {
   FieldError,
 } from "@/components/ui/field";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { toast } from "sonner";
+import { createCourseAction } from "./create-course-action";
 
 // Enums matching your Course model
 export enum CourseLevel {
@@ -50,6 +52,9 @@ export enum CourseCategory {
   OTHER = "Other",
 }
 
+const MAX_FILE_SIZE = 5000000; // 5MB
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png"];
+
 // Zod schema - matching your Mongoose validations as closely as possible
 const formSchema = z.object({
   title: z
@@ -65,24 +70,33 @@ const formSchema = z.object({
 
   level: z.enum(CourseLevel, { error: "Please select a level" }),
   category: z.enum(CourseCategory, { error: "Please select a category" }),
-  thumbnail: z.any(),
+  thumbnail: z
+    .any()
+    .refine((file) => file?.size <= MAX_FILE_SIZE, `Max image size is 5MB.`)
+    .refine(
+      (file) => ACCEPTED_IMAGE_TYPES.includes(file?.type),
+      "Only .jpg, .jpeg, and .png formats are supported.",
+    ),
 });
 
-type FormValues = z.infer<typeof formSchema>;
+export type CreateCourseFormValues = z.infer<typeof formSchema>;
 
 interface CreateUpdateCourseDialogProps {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
+// CMP CMP CMP
 const CreateUpdateCourseDialog: React.FC<CreateUpdateCourseDialogProps> = ({
   open,
   setOpen,
 }) => {
+  // VARS
   // local state for thumbnail preview
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
-  const form = useForm<FormValues>({
+  const form = useForm<CreateCourseFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
@@ -94,6 +108,8 @@ const CreateUpdateCourseDialog: React.FC<CreateUpdateCourseDialogProps> = ({
     },
     mode: "onChange",
   });
+
+  // FUNCTIONS
 
   // Handle file selection + preview
   const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -117,106 +133,28 @@ const CreateUpdateCourseDialog: React.FC<CreateUpdateCourseDialogProps> = ({
     form.setValue("thumbnail", undefined);
   };
 
-  const onSubmit = async (formData: FormValues) => {
-    console.log(
-      "formData --------------------------------------\n",
-      formData.thumbnail,
-      formData.thumbnail?.name,
-    );
-
-    try {
-      // 1 : DIVIDER generating the PutObjectCommand signedUrl
-      const fileKey = `courses/thumbnails/${Date.now()}-${formData?.thumbnail?.name}`;
-
-      const resPutObjectCommand = await fetch(
-        `${process.env.NEXT_PUBLIC_BACK_END_URL}/s3/putObjectCommand`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            fileName: formData?.thumbnail?.name,
-            fileType: formData?.thumbnail?.type,
-            key: fileKey,
-          }),
-        },
-      );
-
-      if (!resPutObjectCommand.ok) {
-        const data = await resPutObjectCommand.json();
-        throw new Error(
-          data.message || "Failed to generate PutObjectCommand signedUrl",
-        );
-      }
-
-      const data1 = await resPutObjectCommand.json();
-      const { signedUrl } = data1?.data;
-
-      // 2 : DIVIDER uploading file to s3
-      const uploadResponse = await fetch(signedUrl, {
-        method: "PUT",
-        headers: {
-          "Content-Type": formData.thumbnail.type,
-        },
-        body: formData.thumbnail,
-      });
-
-      if (!uploadResponse.ok) {
-        console.log(
-          "Upload failed:",
-          uploadResponse.status,
-          uploadResponse.statusText,
-        );
-        throw new Error("Failed to upload file to S3");
-      }
-
-      const publicThumbnailUrl = `https://${process.env.NEXT_PUBLIC_AWS_S3_BUCKET_NAME}.s3.${process.env.NEXT_PUBLIC_AWS_REGION}.amazonaws.com/${fileKey}`;
-
-      const dataToSend = {
-        title: formData.title,
-        description: formData.description,
-        price: formData.price,
-        level: formData.level,
-        category: formData.category,
-        thumbnail: publicThumbnailUrl,
+  async function onSubmit(values: CreateCourseFormValues) {
+    // console.log("values ------------------------\n", values);
+    startTransition(async () => {
+      const data = {
+        ...values,
       };
-
-      // 2 : DIVIDER creating the course
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACK_END_URL}/courses`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(dataToSend),
-        },
-      );
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || "Failed to create course");
+      const result = await createCourseAction(data);
+      if (result.status === "error" || result.status === "fail") {
+        toast.error(result.message);
+      } else if (result.status === "success") {
+        form.reset();
+        if (previewUrl) {
+          URL.revokeObjectURL(previewUrl);
+          setPreviewUrl(null);
+        }
+        setOpen(false);
+        toast.success("Signin successful");
       }
+    });
+  }
 
-      const data = await res.json();
-
-      console.log("Course created successfully:", data);
-      form.reset();
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-        setPreviewUrl(null);
-      }
-      setOpen(false);
-    } catch (error) {
-      console.error(error);
-    }
-
-    // Reset form and UI
-  };
-
+  // JSX JSX JSX
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -377,28 +315,35 @@ const CreateUpdateCourseDialog: React.FC<CreateUpdateCourseDialogProps> = ({
               </FieldDescription>
 
               {!previewUrl ? (
-                <div className="flex items-center justify-center w-full">
-                  <label
-                    htmlFor="thumbnail-upload"
-                    className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted"
+                <div className="w-full">
+                  <AspectRatio
+                    ratio={16 / 9}
+                    className="overflow-hidden rounded-lg border-2 border-dashed border-border bg-muted/50 hover:bg-muted transition-colors"
                   >
-                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                      <Upload className="w-10 h-10 mb-3 text-muted-foreground" />
-                      <p className="mb-2 text-sm text-muted-foreground">
-                        Click to upload or drag & drop
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        PNG, JPG, WEBP (max 5MB recommended)
-                      </p>
-                    </div>
-                    <input
-                      id="thumbnail-upload"
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleThumbnailChange}
-                    />
-                  </label>
+                    <label
+                      htmlFor="thumbnail-upload"
+                      className="cursor-pointer flex h-full w-full items-center justify-center"
+                    >
+                      <div className="flex flex-col items-center justify-center px-4 py-6 text-center">
+                        <Upload className="h-10 w-10 mb-3 text-muted-foreground" />
+                        <p className="mb-2 text-sm text-muted-foreground font-medium">
+                          Click to upload or drag & drop
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          PNG, JPG, WEBP (max 5MB recommended)
+                        </p>
+                      </div>
+
+                      {/* Hidden file input */}
+                      <input
+                        id="thumbnail-upload"
+                        type="file"
+                        accept=".jpg, .jpeg, .png, image/jpeg, image/png"
+                        className="hidden"
+                        onChange={handleThumbnailChange}
+                      />
+                    </label>
+                  </AspectRatio>
                 </div>
               ) : (
                 <div className="relative rounded-lg overflow-hidden border bg-muted">
@@ -446,7 +391,11 @@ const CreateUpdateCourseDialog: React.FC<CreateUpdateCourseDialogProps> = ({
               Cancel
             </Button>
 
-            <Button type="submit" disabled={form.formState.isSubmitting}>
+            <Button
+              loading={isPending}
+              type="submit"
+              disabled={form.formState.isSubmitting || !form.formState.isValid}
+            >
               Create Course
             </Button>
           </div>
@@ -457,3 +406,103 @@ const CreateUpdateCourseDialog: React.FC<CreateUpdateCourseDialogProps> = ({
 };
 
 export default CreateUpdateCourseDialog;
+
+// const onSubmit = async (formData: CreateCourseFormValues) => {
+//   console.log(
+//     "formData --------------------------------------\n",
+//     formData.thumbnail,
+//     formData.thumbnail?.name,
+//   );
+
+//   try {
+//     // 1 : DIVIDER generating the PutObjectCommand signedUrl
+//     const fileKey = `courses/thumbnails/${Date.now()}-${formData?.thumbnail?.name}`;
+
+//     const resPutObjectCommand = await fetch(
+//       `${process.env.NEXT_PUBLIC_BACK_END_URL}/s3/putObjectCommand`,
+//       {
+//         method: "POST",
+//         credentials: "include",
+//         headers: {
+//           "Content-Type": "application/json",
+//         },
+//         body: JSON.stringify({
+//           fileName: formData?.thumbnail?.name,
+//           fileType: formData?.thumbnail?.type,
+//           key: fileKey,
+//         }),
+//       },
+//     );
+
+//     if (!resPutObjectCommand.ok) {
+//       const data = await resPutObjectCommand.json();
+//       throw new Error(
+//         data.message || "Failed to generate PutObjectCommand signedUrl",
+//       );
+//     }
+
+//     const data1 = await resPutObjectCommand.json();
+//     const { signedUrl } = data1?.data;
+
+//     // 2 : DIVIDER uploading file to s3
+//     const uploadResponse = await fetch(signedUrl, {
+//       method: "PUT",
+//       headers: {
+//         "Content-Type": formData.thumbnail.type,
+//       },
+//       body: formData.thumbnail,
+//     });
+
+//     if (!uploadResponse.ok) {
+//       console.log(
+//         "Upload failed:",
+//         uploadResponse.status,
+//         uploadResponse.statusText,
+//       );
+//       throw new Error("Failed to upload file to S3");
+//     }
+
+//     const publicThumbnailUrl = `https://${process.env.NEXT_PUBLIC_AWS_S3_BUCKET_NAME}.s3.${process.env.NEXT_PUBLIC_AWS_REGION}.amazonaws.com/${fileKey}`;
+
+//     const dataToSend = {
+//       title: formData.title,
+//       description: formData.description,
+//       price: formData.price,
+//       level: formData.level,
+//       category: formData.category,
+//       thumbnail: publicThumbnailUrl,
+//     };
+
+//     // 2 : DIVIDER creating the course
+//     const res = await fetch(
+//       `${process.env.NEXT_PUBLIC_BACK_END_URL}/courses`,
+//       {
+//         method: "POST",
+//         credentials: "include",
+//         headers: {
+//           "Content-Type": "application/json",
+//         },
+//         body: JSON.stringify(dataToSend),
+//       },
+//     );
+
+//     if (!res.ok) {
+//       const data = await res.json();
+//       throw new Error(data.message || "Failed to create course");
+//     }
+
+//     const data = await res.json();
+
+//     console.log("Course created successfully:", data);
+//     form.reset();
+//     if (previewUrl) {
+//       URL.revokeObjectURL(previewUrl);
+//       setPreviewUrl(null);
+//     }
+//     setOpen(false);
+//   } catch (error) {
+//     console.error(error);
+//   }
+
+//   // Reset form and UI
+// };
