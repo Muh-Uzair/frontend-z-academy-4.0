@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useTransition } from "react";
 import AppHeading from "@/components/AppHeading";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -16,10 +15,10 @@ import {
   InputOTPSeparator,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { verifyOtpAction } from "./verify-otp-action";
 import { toast } from "sonner";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 const VerifyOtp = () => {
   const [otp, setOtp] = useState<string>("");
@@ -29,6 +28,7 @@ const VerifyOtp = () => {
   const router = useRouter();
 
   useEffect(() => {
+    console.log("otp.length ---------------------------------\n", otp.length);
     if (otp.length === 6 && typeof email === "string") {
       startTransition(async () => {
         const result = await verifyOtpAction({ email, otp });
@@ -62,39 +62,34 @@ const VerifyOtp = () => {
         </CardHeader>
 
         <CardContent className="grid gap-6">
-          <div className="flex justify-center">
-            <InputOTP
-              maxLength={6}
-              value={otp}
-              onChange={setOtp}
-              disabled={isPending}
-              autoFocus
-            >
-              <InputOTPGroup>
-                <InputOTPSlot index={0} />
-                <InputOTPSlot index={1} />
-                <InputOTPSlot index={2} />
-              </InputOTPGroup>
-              <InputOTPSeparator />
-              <InputOTPGroup>
-                <InputOTPSlot index={3} />
-                <InputOTPSlot index={4} />
-                <InputOTPSlot index={5} />
-              </InputOTPGroup>
-            </InputOTP>
-          </div>
-
-          <div className="text-center text-sm text-muted-foreground">
-            Didn&apos;t receive the code?{" "}
-            <Button variant="link" className="h-auto p-0" asChild>
-              <Link href="/resend-otp">Resend OTP</Link>
-            </Button>
-          </div>
-
           {isPending && (
-            <p className="text-center text-sm text-muted-foreground">
-              Verifying your code...
-            </p>
+            <div className="w-full h-full flex justify-center items-center">
+              <LoadingSpinner />
+            </div>
+          )}
+
+          {!isPending && (
+            <div className="flex justify-center">
+              <InputOTP
+                maxLength={6}
+                value={otp}
+                onChange={ setOtp}
+                disabled={isPending}
+                autoFocus
+              >
+                <InputOTPGroup>
+                  <InputOTPSlot index={0} />
+                  <InputOTPSlot index={1} />
+                  <InputOTPSlot index={2} />
+                </InputOTPGroup>
+                <InputOTPSeparator />
+                <InputOTPGroup>
+                  <InputOTPSlot index={3} />
+                  <InputOTPSlot index={4} />
+                  <InputOTPSlot index={5} />
+                </InputOTPGroup>
+              </InputOTP>
+            </div>
           )}
         </CardContent>
       </Card>

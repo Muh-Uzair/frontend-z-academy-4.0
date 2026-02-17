@@ -61,6 +61,11 @@ const navigationConfig = {
       icon: LayoutDashboard,
     },
     { title: "Courses", url: "/dashboard/student/courses", icon: BookOpen },
+    {
+      title: "Enrollments",
+      url: "/dashboard/student/enrollments",
+      icon: BookOpen,
+    },
     { title: "Settings", url: "/dashboard/student/settings", icon: Settings },
   ],
 };
