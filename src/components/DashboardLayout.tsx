@@ -11,7 +11,7 @@ interface DashboardLayoutProps {
 
 const DashboardLayout = ({
   children,
-  role = "student",
+  role = "instructor",
 }: DashboardLayoutProps) => {
   return (
     <>

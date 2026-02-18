@@ -45,7 +45,7 @@ const CourseEnrollmentMain = ({
   const handleBuyClick = async () => {
     startTransition(async () => {
       const dataToSend: DataToSendType = {
-        student: "6977bb96a3ac1e132f440d84",
+        student: "6994ede8bbe39a90a5394191",
         course: courseId,
         instructor: course.instructor._id,
 
