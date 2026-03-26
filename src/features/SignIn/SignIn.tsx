@@ -26,6 +26,8 @@ import Link from "next/link";
 import { signInAction } from "./signin-action";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { IUser } from "@/types/user-types";
 
 // SignIn Form Schema
 const signinFormSchema = z.object({
@@ -39,8 +41,9 @@ const signinFormSchema = z.object({
 
 export type SigninFormSchemaType = z.infer<typeof signinFormSchema>;
 
-// SignIn Form Component
+// CMP CMP CMP SignIn Form Component
 const SignInForm = () => {
+  // VARS
   // Form initialization
   const form = useForm<SigninFormSchemaType>({
     resolver: zodResolver(signinFormSchema),
@@ -51,7 +54,9 @@ const SignInForm = () => {
   });
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+  const { setUser } = useAuthStore();
 
+  // FUNCTIONS
   async function onSubmit(values: SigninFormSchemaType) {
     startTransition(async () => {
       const data = {
@@ -60,10 +65,14 @@ const SignInForm = () => {
 
       const result = await signInAction(data);
 
+      console.log("result -------------------------------------\n", result);
+
       if (result.status === "error" || result.status === "fail") {
         toast.error(result.message);
       } else if (result.status === "success") {
         toast.success("Signin successful");
+        
+        setUser((result?.data?.user as IUser) || {});
         router.push(`/dashboard/${result?.data?.user?.role}/dashboard`);
       }
     });
@@ -74,6 +83,7 @@ const SignInForm = () => {
     console.log("Google sign in clicked");
   };
 
+  // JSX JSX JSX
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -133,7 +143,7 @@ const SignInForm = () => {
   );
 };
 
-// Main SignIn Component
+// CMP CMP CMP Main SignIn Component
 const SignIn = () => {
   return (
     <div className="flex h-screen items-center justify-center">

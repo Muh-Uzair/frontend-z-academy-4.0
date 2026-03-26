@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
 import "../styles/globals.css";
 import { Toaster } from "@/components/ui/sonner";
+import { SocketProvider } from "@/providers/SocketProvider";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -22,10 +23,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${montserrat.variable} antialiased`}>
-        <main>{children} </main>{" "}
-        <Toaster richColors position="top-right" />{" "}
-      </body>
+      <SocketProvider>
+        <body className={`${montserrat.variable} antialiased`}>
+          <main>{children} </main>{" "}
+          <Toaster richColors position="top-right" />{" "}
+        </body>
+      </SocketProvider>
     </html>
   );
 }

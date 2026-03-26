@@ -6,19 +6,15 @@ import AppSidebar from "./AppSidebar";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
-  role?: "academy" | "instructor" | "student";
 }
 
-const DashboardLayout = ({
-  children,
-  role = "instructor",
-}: DashboardLayoutProps) => {
+const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   return (
     <>
       {/* Mobile Layout */}
       <div className="flex flex-col min-h-screen md:hidden">
         <div className="flex-1 pb-16">{children}</div>
-        <BottomNav role={role} />
+        <BottomNav role={"student"} />
       </div>
 
       {/* Desktop Layout */}
@@ -26,7 +22,7 @@ const DashboardLayout = ({
         <Header />
         <div className="flex flex-1 overflow-hidden">
           <SidebarProvider>
-            <AppSidebar role={role} />
+            <AppSidebar />
             <main className="flex-1 overflow-y-auto pt-12.5 px-10">
               {children}
             </main>

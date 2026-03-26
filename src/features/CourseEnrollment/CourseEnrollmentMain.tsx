@@ -29,6 +29,7 @@ import {
 } from "./create-enrollment-action";
 import { toast } from "sonner";
 import { EnrollmentStatus, PaymentStatus } from "@/types/enrollments-types";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 // CMP CMP CMP
 const CourseEnrollmentMain = ({
@@ -40,12 +41,17 @@ const CourseEnrollmentMain = ({
 }) => {
   // VARS
   const [isPending, startTransition] = useTransition();
+  const { user } = useAuthStore();
 
   // FUNCTIONS
   const handleBuyClick = async () => {
+    if (user?.role === "instructor") {
+      toast.error("Instructor can not buy a course");
+    }
+
     startTransition(async () => {
       const dataToSend: DataToSendType = {
-        student: "6994ede8bbe39a90a5394191",
+        student: "6994e87acbac6c8826f91f9d",
         course: courseId,
         instructor: course.instructor._id,
 
@@ -73,6 +79,8 @@ const CourseEnrollmentMain = ({
       }
     });
   };
+
+  console.log("user -------------------------------------------\n", user);
 
   // JSX JSX JSX
   return (

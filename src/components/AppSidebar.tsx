@@ -6,24 +6,25 @@ import {
   BookOpen,
   Settings,
   GraduationCap,
+  LogOut,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-
-interface AppSidebarProps {
-  role: "academy" | "instructor" | "student";
-}
+import { useAuthStore } from "@/stores/useAuthStore";
+import { IUser } from "@/types/user-types";
 
 const navigationConfig = {
   academy: [
@@ -66,18 +67,38 @@ const navigationConfig = {
       url: "/dashboard/student/enrollments",
       icon: BookOpen,
     },
+    {
+      title: "Private Chat",
+      url: "/dashboard/student/private-chat",
+      icon: BookOpen,
+    },
+    {
+      title: "Public Chat",
+      url: "/dashboard/student/public-chat",
+      icon: BookOpen,
+    },
     { title: "Settings", url: "/dashboard/student/settings", icon: Settings },
   ],
 };
 
-export default function AppSidebar({ role }: AppSidebarProps) {
+// CMP CMP CMP App Sidebar Component
+export default function AppSidebar() {
+  // VARS
   // console.log("role ------------------------------", role);
   const pathname = usePathname();
+  const { user }: { user: IUser } = useAuthStore() as { user: IUser };
+  const role = (user?.role || "student") as keyof typeof navigationConfig;
   const items = navigationConfig[role];
 
+  // FUNCTIONS
+  const handleSignout = () => {
+    console.log(" SIgnout clicked");
+  };
+
+  // JSX JSX JSX
   return (
     <Sidebar>
-      <SidebarContent className="pt-[60px]">
+      <SidebarContent className="pt-15">
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -105,6 +126,18 @@ export default function AppSidebar({ role }: AppSidebarProps) {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      <SidebarFooter>
+        <Button
+          type="button"
+          variant="ghost"
+          className="w-full justify-start gap-2"
+          onClick={handleSignout}
+        >
+          <LogOut className="size-4" />
+          <span>Signout</span>
+        </Button>
+      </SidebarFooter>
     </Sidebar>
   );
 }

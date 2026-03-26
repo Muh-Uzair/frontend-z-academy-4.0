@@ -9,6 +9,12 @@ export const signInAction = async ({
   password,
 }: SigninFormSchemaType): Promise<ApiResponse> => {
   try {
+    console.log(
+      "Here ------------------------------------\n",
+      process.env.BACK_END_URL,
+      `${process.env.BACK_END_URL}/auth/signin`,
+    );
+
     const cookieStore = await cookies();
 
     const cookieHeader = cookieStore.toString();
@@ -22,6 +28,11 @@ export const signInAction = async ({
       credentials: "include",
       body: JSON.stringify({ email, password }),
     });
+
+    console.log(
+      "response -----------------------------------------\n",
+      response,
+    );
 
     const setCookieHeaders = response.headers.getSetCookie();
 

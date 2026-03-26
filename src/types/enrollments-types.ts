@@ -28,3 +28,18 @@ export interface IEnrollment {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export type EnrollmentType = {
+  _id: string;
+  student: { _id: string; fullName: string };
+  course: {
+    _id: string;
+    title: string;
+  };
+  instructor: { _id: string; fullName: string };
+  enrollmentDate: string;
+  status: EnrollmentStatus;
+  paymentStatus: PaymentStatus;
+  amountPaid: number;
+  originalPrice: number;
+};
