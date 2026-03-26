@@ -61,7 +61,7 @@ const StudentEnrollmentsDashboard = ({
                 cardButtonContent={
                   <Button
                     onClick={() => {
-                      joinCourseRoom(enrollment?.course?._id);
+                      joinCourseRoom(enrollment?.course?.conversation);
                       setSelectedEnrollment(enrollment);
                     }}
                     size="sm"

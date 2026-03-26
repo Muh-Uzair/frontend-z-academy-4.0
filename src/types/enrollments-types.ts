@@ -35,6 +35,7 @@ export type EnrollmentType = {
   course: {
     _id: string;
     title: string;
+    conversation: string;
   };
   instructor: { _id: string; fullName: string };
   enrollmentDate: string;

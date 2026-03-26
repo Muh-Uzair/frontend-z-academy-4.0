@@ -6,12 +6,11 @@ import {
   BookOpen,
   Settings,
   GraduationCap,
-  LogOut,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import SignoutDialog from "@/components/SignoutDialog";
 
 import {
   Sidebar,
@@ -90,11 +89,6 @@ export default function AppSidebar() {
   const role = (user?.role || "student") as keyof typeof navigationConfig;
   const items = navigationConfig[role];
 
-  // FUNCTIONS
-  const handleSignout = () => {
-    console.log(" SIgnout clicked");
-  };
-
   // JSX JSX JSX
   return (
     <Sidebar>
@@ -128,15 +122,7 @@ export default function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter>
-        <Button
-          type="button"
-          variant="ghost"
-          className="w-full justify-start gap-2"
-          onClick={handleSignout}
-        >
-          <LogOut className="size-4" />
-          <span>Signout</span>
-        </Button>
+        <SignoutDialog />
       </SidebarFooter>
     </Sidebar>
   );

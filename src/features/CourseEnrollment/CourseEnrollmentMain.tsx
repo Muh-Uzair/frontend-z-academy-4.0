@@ -51,7 +51,7 @@ const CourseEnrollmentMain = ({
 
     startTransition(async () => {
       const dataToSend: DataToSendType = {
-        student: "6994e87acbac6c8826f91f9d",
+        student: user?._id as string,
         course: courseId,
         instructor: course.instructor._id,
 
@@ -80,7 +80,7 @@ const CourseEnrollmentMain = ({
     });
   };
 
-  console.log("user -------------------------------------------\n", user);
+  // console.log("user -------------------------------------------\n", user);
 
   // JSX JSX JSX
   return (

@@ -7,8 +7,10 @@ import { Textarea } from "@/components/ui/textarea"; // ← Changed from Input t
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ArrowLeft, Send } from "lucide-react";
+import { ApiResponse } from "@/types/api-response-types";
 import { EnrollmentType } from "@/types/enrollments-types";
 import { useSocket } from "@/providers/SocketProvider";
+import { useAuthStore } from "@/stores/useAuthStore";
 // import { EnrollmentType } from "./DashboardStudentPublicChat";
 
 // Dummy message type (for now - later can come from real API/socket)
@@ -54,6 +56,7 @@ const dummyMessages: Message[] = [
 
 interface PublicChatProps {
   enrollment: EnrollmentType;
+  messagesData?: ApiResponse;
   setSelectedEnrollment: React.Dispatch<
     React.SetStateAction<EnrollmentType | null>
   >;
@@ -68,14 +71,15 @@ export default function PublicChat({
   const [messages] = useState<Message[]>(dummyMessages);
   const [newMessage, setNewMessage] = useState("");
   const { sendCourseMessage, courseRoomMessages } = useSocket();
+  const { user } = useAuthStore();
 
   // FUNCTIONS
   const handleSendMessage = () => {
     if (!newMessage.trim()) return;
 
     sendCourseMessage({
-      conversationId: "69c43e217492199e68a5819b",
-      senderId: "6994e7ffcbac6c8826f91f98",
+      conversationId: enrollment?.course?.conversation as string,
+      senderId: user?._id as string,
       receiverId: null,
       content: newMessage,
       messageType: "text",

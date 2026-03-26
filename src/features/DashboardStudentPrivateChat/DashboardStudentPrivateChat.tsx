@@ -7,6 +7,7 @@ import { ApiResponse } from "@/types/api-response-types";
 import { use, useState } from "react";
 import { EnrollmentType } from "@/types/enrollments-types";
 import PrivateChat from "./PrivateChat";
+import { getAllMessagesOnConversationId } from "../DashboardStudentPublicChat/getAllMessagesOnConversationId";
 
 // CMP CMP CMP
 const StudentEnrollmentsDashboard = ({

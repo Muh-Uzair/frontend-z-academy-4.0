@@ -65,15 +65,13 @@ const SignInForm = () => {
 
       const result = await signInAction(data);
 
-      console.log("result -------------------------------------\n", result);
-
       if (result.status === "error" || result.status === "fail") {
         toast.error(result.message);
       } else if (result.status === "success") {
         toast.success("Signin successful");
-        
+
         setUser((result?.data?.user as IUser) || {});
-        router.push(`/dashboard/${result?.data?.user?.role}/dashboard`);
+        router.push(`/dashboard/${result?.data?.user?.role}/dashboard`);  
       }
     });
   }

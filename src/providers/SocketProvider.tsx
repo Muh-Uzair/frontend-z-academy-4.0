@@ -12,7 +12,7 @@ import {
 import { io, Socket } from "socket.io-client";
 
 interface ISocketContext {
-  joinCourseRoom: (courseId: string) => void;
+  joinCourseRoom: (conversationId: string) => void;
   sendCourseMessage: (data: {
     conversationId: string;
     senderId: string;
@@ -44,10 +44,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   // FUNCTIONS
 
   // FUNCTION Join Course Room
-  const joinCourseRoom = useCallback((courseId: string) => {
+  const joinCourseRoom = useCallback((conversationId: string) => {
     if (socketRef.current) {
-      socketRef.current.emit("event:join-course-room", { courseId });
-      console.log(`Joining course room: ${courseId}`);
+      socketRef.current.emit("event:join-course-room", { conversationId });
+      console.log(`Joining course room: ${conversationId}`);
     }
   }, []);
 

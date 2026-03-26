@@ -148,8 +148,12 @@ const CreateUpdateCourseDialog: React.FC<CreateUpdateCourseDialogProps> = ({
           URL.revokeObjectURL(previewUrl);
           setPreviewUrl(null);
         }
-        setOpen(false);
+
         toast.success("Signin successful");
+
+        setTimeout(() => {
+          setOpen(false);
+        }, 1000);
       }
     });
   }
