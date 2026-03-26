@@ -1,7 +1,7 @@
 // features/DashboardStudentPublicChat/PublicChat.tsx
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea"; // ← Changed from Input to Textarea
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -56,7 +56,6 @@ const dummyMessages: Message[] = [
 
 interface PublicChatProps {
   enrollment: EnrollmentType;
-  messagesData?: ApiResponse;
   setSelectedEnrollment: React.Dispatch<
     React.SetStateAction<EnrollmentType | null>
   >;
@@ -68,12 +67,34 @@ export default function PublicChat({
   setSelectedEnrollment,
 }: PublicChatProps) {
   // VARS
+  const [messagesData, setMessagesData] = useState<ApiResponse | null>(null);
   const [messages] = useState<Message[]>(dummyMessages);
   const [newMessage, setNewMessage] = useState("");
   const { sendCourseMessage, courseRoomMessages } = useSocket();
   const { user } = useAuthStore();
 
   // FUNCTIONS
+  useEffect(() => {
+    const fetchMessages = async () => {
+      try {
+        const response = await fetch(
+          `/api/messages/${enrollment.course.conversation}`,
+        );
+        const data: ApiResponse = await response.json();
+
+        setMessagesData(data);
+      } catch (error) {
+        console.error("Fetch messages failed", error);
+        setMessagesData({
+          status: "error",
+          message: "Get all messages failed",
+        });
+      }
+    };
+
+    fetchMessages();
+  }, [enrollment.course.conversation]);
+
   const handleSendMessage = () => {
     if (!newMessage.trim()) return;
 
@@ -95,6 +116,11 @@ export default function PublicChat({
       handleSendMessage();
     }
   };
+
+  console.log(
+    "messagesData ---------------------------------------\n",
+    messagesData,
+  );
 
   console.log(
     "courseRoomMessages ----------------------\n",
