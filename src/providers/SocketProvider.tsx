@@ -14,9 +14,15 @@ import { io, Socket } from "socket.io-client";
 interface ISocketContext {
   joinCourseRoom: (conversationId: string) => void;
   sendCourseMessage: (data: {
-    conversationId: string;
-    senderId: string;
-    receiverId: null;
+    conversation: string;
+    sender: {
+      id: string;
+      fullName: string;
+    };
+    receiver: {
+      id: string;
+      fullName: string;
+    } | null;
     content: string;
     messageType: "text" | "file";
   }) => void;
@@ -27,19 +33,14 @@ interface ISocketContext {
 const SocketContext = createContext<ISocketContext | null>(null);
 
 // custom hook
-export const useSocket = () => {
-  const context = useContext(SocketContext);
-  if (!context) {
-    throw new Error("useSocket must be used within a SocketProvider");
-  }
-  return context;
-};
 
 // CMP CMP CMP
 export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   // VARS
   const socketRef = useRef<Socket | null>(null);
-  const [courseRoomMessages, setCourseRoomMessages] = useState<IMessage[]>([]);
+  const [courseRoomMessages, setCourseRoomMessages] = useState<IMessage[] | []>(
+    [],
+  );
 
   // FUNCTIONS
 
@@ -54,17 +55,23 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   // FUNCTION Send Message in Course
   const sendCourseMessage = useCallback(
     (data: {
-      conversationId: string;
-      senderId: string;
-      receiverId: null;
+      conversation: string;
+      sender: {
+        id: string;
+        fullName: string;
+      };
+      receiver: {
+        id: string;
+        fullName: string;
+      } | null;
       content: string;
       messageType: "text" | "file";
     }) => {
       if (socketRef.current) {
         socketRef.current.emit("event:course-message", {
-          conversationId: data.conversationId,
-          senderId: data.senderId,
-          receiverId: data.receiverId,
+          conversation: data.conversation,
+          sender: data.sender,
+          receiver: data.receiver,
           content: data.content,
           messageType: data.messageType,
         });
@@ -110,4 +117,12 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       {children}
     </SocketContext.Provider>
   );
+};
+
+export const useSocket = () => {
+  const context = useContext(SocketContext);
+  if (!context) {
+    throw new Error("useSocket must be used within a SocketProvider");
+  }
+  return context;
 };

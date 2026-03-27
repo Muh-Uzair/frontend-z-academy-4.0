@@ -1,7 +1,7 @@
 // features/DashboardStudentPublicChat/PublicChat.tsx
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea"; // ← Changed from Input to Textarea
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -11,48 +11,79 @@ import { ApiResponse } from "@/types/api-response-types";
 import { EnrollmentType } from "@/types/enrollments-types";
 import { useSocket } from "@/providers/SocketProvider";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { IMessage } from "@/types/messages-types";
 // import { EnrollmentType } from "./DashboardStudentPublicChat";
 
 // Dummy message type (for now - later can come from real API/socket)
-type Message = {
-  id: string;
-  sender: "student" | "instructor";
-  content: string;
-  timestamp: string;
-  senderName: string;
-};
+// type Message = {
+//   _id: string;
+//   conversationId: string;
+//   senderId: {
+//     _id: string;
+//     fullName: string;
+//     role: "student" | "instructor";
+//   };
+//   receiverId: null;
+//   content: string;
+//   messageType: "text";
+//   createdAt: string;
+// };
 
-const dummyMessages: Message[] = [
-  {
-    id: "1",
-    sender: "instructor",
-    senderName: "Sir Ahmed",
-    content:
-      "Hello everyone! Welcome to the public discussion for this course.",
-    timestamp: "10:15 AM",
-  },
-  {
-    id: "2",
-    sender: "student",
-    senderName: "Muhammad",
-    content: "Assalam-o-Alaikum sir, assignment ki deadline kab hai?",
-    timestamp: "10:17 AM",
-  },
-  {
-    id: "3",
-    sender: "instructor",
-    senderName: "Sir Ahmed",
-    content: "Deadline is next Sunday 11:59 PM. Please submit on LMS.",
-    timestamp: "10:19 AM",
-  },
-  {
-    id: "4",
-    sender: "student",
-    senderName: "Ali",
-    content: "Sir, lecture 5 ka recording upload ho gaya hai?",
-    timestamp: "10:22 AM",
-  },
-];
+// const dummyMessages: Message[] = [
+//   {
+//     _id: "67c1a44f8d2e4c9b7a123401",
+//     conversationId: "67c1a44f8d2e4c9b7a999001",
+//     senderId: {
+//       _id: "67c1a44f8d2e4c9b7a555101",
+//       fullName: "Sir Ahmed",
+//       role: "instructor",
+//     },
+//     receiverId: null,
+//     content:
+//       "Hello everyone! Welcome to the public discussion for this course.",
+//     messageType: "text",
+//     createdAt: "10:15 AM",
+//   },
+//   {
+//     _id: "67c1a44f8d2e4c9b7a123402",
+//     conversationId: "67c1a44f8d2e4c9b7a999001",
+//     senderId: {
+//       _id: "67c1a44f8d2e4c9b7a555102",
+//       fullName: "Muhammad",
+//       role: "student",
+//     },
+//     receiverId: null,
+//     content: "Assalam-o-Alaikum sir, assignment ki deadline kab hai?",
+//     messageType: "text",
+//     createdAt: "10:17 AM",
+//   },
+//   {
+//     _id: "67c1a44f8d2e4c9b7a123403",
+//     conversationId: "67c1a44f8d2e4c9b7a999001",
+//     senderId: {
+//       _id: "67c1a44f8d2e4c9b7a555101",
+//       fullName: "Sir Ahmed",
+//       role: "instructor",
+//     },
+//     receiverId: null,
+//     content: "Deadline is next Sunday 11:59 PM. Please submit on LMS.",
+//     messageType: "text",
+//     createdAt: "10:19 AM",
+//   },
+//   {
+//     _id: "67c1a44f8d2e4c9b7a123404",
+//     conversationId: "67c1a44f8d2e4c9b7a999001",
+//     senderId: {
+//       _id: "67c1a44f8d2e4c9b7a555103",
+//       fullName: "Ali",
+//       role: "student",
+//     },
+//     receiverId: null,
+//     content: "Sir, lecture 5 ka recording upload ho gaya hai?",
+//     messageType: "text",
+//     createdAt: "10:22 AM",
+//   },
+// ];
 
 interface PublicChatProps {
   enrollment: EnrollmentType;
@@ -67,11 +98,14 @@ export default function PublicChat({
   setSelectedEnrollment,
 }: PublicChatProps) {
   // VARS
-  const [messagesData, setMessagesData] = useState<ApiResponse | null>(null);
-  const [messages] = useState<Message[]>(dummyMessages);
+  const [messages, setMessages] = useState<IMessage[] | []>([]);
   const [newMessage, setNewMessage] = useState("");
   const { sendCourseMessage, courseRoomMessages } = useSocket();
   const { user } = useAuthStore();
+  const mergedMessages = useMemo(
+    () => [...messages, ...courseRoomMessages],
+    [messages, courseRoomMessages],
+  );
 
   // FUNCTIONS
   useEffect(() => {
@@ -82,13 +116,9 @@ export default function PublicChat({
         );
         const data: ApiResponse = await response.json();
 
-        setMessagesData(data);
+        setMessages(data.data.messages || []);
       } catch (error) {
         console.error("Fetch messages failed", error);
-        setMessagesData({
-          status: "error",
-          message: "Get all messages failed",
-        });
       }
     };
 
@@ -99,9 +129,9 @@ export default function PublicChat({
     if (!newMessage.trim()) return;
 
     sendCourseMessage({
-      conversationId: enrollment?.course?.conversation as string,
-      senderId: user?._id as string,
-      receiverId: null,
+      conversation: enrollment?.course?.conversation as string,
+      sender: { id: user?._id as string, fullName: user?.fullName as string },
+      receiver: null,
       content: newMessage,
       messageType: "text",
     });
@@ -119,7 +149,7 @@ export default function PublicChat({
 
   console.log(
     "messagesData ---------------------------------------\n",
-    messagesData,
+    mergedMessages,
   );
 
   console.log(
@@ -155,25 +185,23 @@ export default function PublicChat({
       {/* Messages Area */}
       <ScrollArea className="flex-1 px-4 py-6">
         <div className="space-y-6">
-          {messages.map((msg) => (
+          {mergedMessages.map((msg) => (
             <div
-              key={msg.id}
+              key={msg._id}
               className={`flex gap-3 ${
-                msg.sender === "student" ? "justify-end" : "justify-start"
+                msg.sender.id === user?._id ? "justify-end" : "justify-start"
               }`}
             >
-              {msg.sender !== "student" && (
+              {msg.sender.id !== user?._id && (
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src="" alt={msg.senderName} />
-                  <AvatarFallback>
-                    {msg.senderName.substring(0, 2).toUpperCase()}
-                  </AvatarFallback>
+                  <AvatarImage src="" alt={msg.sender.fullName} />
+                  <AvatarFallback>AS</AvatarFallback>
                 </Avatar>
               )}
 
               <div
                 className={`max-w-[70%] rounded-2xl px-4 py-3 ${
-                  msg.sender === "student"
+                  msg.sender.id === user?._id
                     ? "bg-primary text-primary-foreground"
                     : "bg-muted"
                 }`}
@@ -181,14 +209,15 @@ export default function PublicChat({
                 <p className="text-sm">{msg.content}</p>
                 <p
                   className={`mt-1 text-xs opacity-70 ${
-                    msg.sender === "student" ? "text-right" : "text-left"
+                    msg.sender.id === user?._id ? "text-right" : "text-left"
                   }`}
                 >
-                  {msg.timestamp}
+                  {/* {msg.createdAt} */}
+                  {"10:22 AM"}
                 </p>
               </div>
 
-              {msg.sender === "student" && (
+              {msg.sender.id === user?._id && (
                 <Avatar className="h-8 w-8">
                   <AvatarImage src="" alt="You" />
                   <AvatarFallback>YO</AvatarFallback>

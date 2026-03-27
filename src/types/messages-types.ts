@@ -4,9 +4,17 @@ export enum MessageType {
 }
 
 export interface IMessage extends Document {
-  conversationId: string;
-  senderId: string;
-  receiverId: string | null;
+  _id: string;
+  conversation: string;
+  sender: {
+    id: string;
+    fullName: string;
+  };
+  receiver: {
+    id: string;
+    fullName: string;
+  } | null;
   content: string;
   messageType: MessageType;
+  createdAt: Date;
 }
