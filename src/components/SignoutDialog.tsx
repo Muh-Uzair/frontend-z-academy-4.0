@@ -36,6 +36,7 @@ const SignoutDialog = () => {
         toast.error(result.message);
       } else if (result.status === "success") {
         clearUser();
+        localStorage.removeItem("user");
         setOpen(false);
         router.push(`/`);
       }

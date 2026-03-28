@@ -125,7 +125,7 @@ export default function PrivateChat({
   };
 
   return (
-    <div className="flex h-full flex-col bg-background">
+    <div className="flex h-full min-h-0 flex-col bg-background">
       {/* Header */}
       <div className="border-b p-4">
         <div className="flex items-center justify-between">
@@ -159,7 +159,7 @@ export default function PrivateChat({
       </div>
 
       {/* Messages Area */}
-      <ScrollArea className="flex-1 px-4 py-6">
+      <ScrollArea className="min-h-0 flex-1 px-4 py-6">
         <div className="space-y-6">
           {messages.map((msg) => (
             <div
@@ -225,7 +225,8 @@ export default function PrivateChat({
           </Button>
         </div>
         <p className="mt-2 text-xs text-muted-foreground text-center">
-          This is a private chat between you and the instructor
+          This is a private chat between you and the instructor or other
+          students
         </p>
       </div>
     </div>

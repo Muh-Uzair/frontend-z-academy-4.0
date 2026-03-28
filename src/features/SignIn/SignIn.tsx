@@ -71,7 +71,8 @@ const SignInForm = () => {
         toast.success("Signin successful");
 
         setUser((result?.data?.user as IUser) || {});
-        router.push(`/dashboard/${result?.data?.user?.role}/dashboard`);  
+        localStorage.setItem("user", JSON.stringify(result?.data?.user));
+        router.push(`/dashboard/${result?.data?.user?.role}/dashboard`);
       }
     });
   }
