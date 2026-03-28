@@ -1,15 +1,11 @@
 // features/DashboardStudentPrivateChat/PrivateChat.tsx
 "use client";
 
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ArrowLeft, Send } from "lucide-react";
+import React, { useMemo, useState } from "react";
 import { EnrollmentType } from "@/types/enrollments-types";
+import PrivateChatPanel from "./PrivateChatPanel";
+import PrivateChatSidebar, { Participant } from "./PrivateChatSidebar";
 
-// Dummy message type for private chat
 type Message = {
   id: string;
   sender: "student" | "instructor";
@@ -18,7 +14,51 @@ type Message = {
   senderName: string;
 };
 
-// Dummy messages to make the chat scrollable and realistic
+const dummyParticipants: Participant[] = [
+  {
+    id: "instructor-1",
+    fullName: "Sir Ahmed",
+    role: "instructor",
+    status: "online",
+    lastMessage: "Can you share the exact error message?",
+  },
+  {
+    id: "student-1",
+    fullName: "Muhammad Uzair",
+    role: "student",
+    status: "online",
+    lastMessage: "I have fixed that bug now.",
+  },
+  {
+    id: "student-2",
+    fullName: "Ali Raza",
+    role: "student",
+    status: "offline",
+    lastMessage: "Does anyone have the assignment solution idea?",
+  },
+  {
+    id: "student-3",
+    fullName: "Ayesha Khan",
+    role: "student",
+    status: "online",
+    lastMessage: "I can help with the React state issue.",
+  },
+  {
+    id: "student-4",
+    fullName: "Fatima Noor",
+    role: "student",
+    status: "offline",
+    lastMessage: "Please share the class recording link.",
+  },
+  {
+    id: "student-5",
+    fullName: "Hassan Tariq",
+    role: "student",
+    status: "online",
+    lastMessage: "I will join the discussion in 10 minutes.",
+  },
+];
+
 const dummyMessages: Message[] = [
   {
     id: "1",
@@ -110,6 +150,25 @@ export default function PrivateChat({
 }: PrivateChatProps) {
   const [messages] = useState<Message[]>(dummyMessages);
   const [newMessage, setNewMessage] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedParticipantId, setSelectedParticipantId] = useState(
+    dummyParticipants[0]?.id ?? "",
+  );
+
+  const filteredParticipants = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+
+    if (!normalizedSearch) return dummyParticipants;
+
+    return dummyParticipants.filter((participant) =>
+      participant.fullName.toLowerCase().includes(normalizedSearch),
+    );
+  }, [searchTerm]);
+
+  const selectedParticipant =
+    dummyParticipants.find(
+      (participant) => participant.id === selectedParticipantId,
+    ) ?? dummyParticipants[0];
 
   const handleSendMessage = () => {
     if (!newMessage.trim()) return;
@@ -125,110 +184,25 @@ export default function PrivateChat({
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-background">
-      {/* Header */}
-      <div className="border-b p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setSelectedEnrollment(null)}
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
+    <div className="flex h-full min-h-0 gap-4 bg-background">
+      <PrivateChatSidebar
+        participants={filteredParticipants}
+        searchTerm={searchTerm}
+        selectedParticipantId={selectedParticipantId}
+        onSearchChange={setSearchTerm}
+        onSelectParticipant={setSelectedParticipantId}
+      />
 
-            <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10">
-                <AvatarImage src="" alt={enrollment.instructor.fullName} />
-                <AvatarFallback>
-                  {enrollment.instructor.fullName.substring(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <h2 className="font-semibold">
-                  {enrollment.instructor.fullName}
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  Private Chat • {enrollment.course.title}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Messages Area */}
-      <ScrollArea className="min-h-0 flex-1 px-4 py-6">
-        <div className="space-y-6">
-          {messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`flex gap-3 ${
-                msg.sender === "student" ? "justify-end" : "justify-start"
-              }`}
-            >
-              {msg.sender !== "student" && (
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src="" alt={msg.senderName} />
-                  <AvatarFallback>
-                    {msg.senderName.substring(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-              )}
-
-              <div
-                className={`max-w-[75%] rounded-2xl px-4 py-3 ${
-                  msg.sender === "student"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted"
-                }`}
-              >
-                <p className="text-sm">{msg.content}</p>
-                <p
-                  className={`mt-1 text-xs opacity-70 ${
-                    msg.sender === "student" ? "text-right" : "text-left"
-                  }`}
-                >
-                  {msg.timestamp}
-                </p>
-              </div>
-
-              {msg.sender === "student" && (
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src="" alt="You" />
-                  <AvatarFallback>ME</AvatarFallback>
-                </Avatar>
-              )}
-            </div>
-          ))}
-        </div>
-      </ScrollArea>
-
-      {/* Message Input */}
-      <div className="border-t p-4">
-        <div className="flex items-end gap-2">
-          <Textarea
-            placeholder="Type your message..."
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyDown={handleKeyDown}
-            className="min-h-[44px] max-h-[120px] resize-none"
-            rows={1}
-          />
-          <Button
-            size="icon"
-            onClick={handleSendMessage}
-            disabled={!newMessage.trim()}
-          >
-            <Send className="h-5 w-5" />
-          </Button>
-        </div>
-        <p className="mt-2 text-xs text-muted-foreground text-center">
-          This is a private chat between you and the instructor or other
-          students
-        </p>
-      </div>
+      <PrivateChatPanel
+        enrollment={enrollment}
+        selectedParticipant={selectedParticipant}
+        messages={messages}
+        newMessage={newMessage}
+        onMessageChange={setNewMessage}
+        onSendMessage={handleSendMessage}
+        onBack={() => setSelectedEnrollment(null)}
+        onKeyDown={handleKeyDown}
+      />
     </div>
   );
 }
