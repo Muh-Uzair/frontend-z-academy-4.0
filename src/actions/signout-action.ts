@@ -18,11 +18,6 @@ export const signOutAction = async (): Promise<ApiResponse> => {
       credentials: "include",
     });
 
-    console.log(
-      "response -----------------------------------------\n",
-      response,
-    );
-
     const setCookieHeaders = response.headers.getSetCookie();
 
     if (setCookieHeaders && setCookieHeaders.length > 0) {

@@ -21,11 +21,16 @@ const StudentEnrollmentsDashboard = ({
   const enrollments: EnrollmentType[] = enrollmentsData.data?.enrollments;
   const [selectedEnrollment, setSelectedEnrollment] =
     useState<EnrollmentType | null>(null);
-  const { joinCourseRoom } = useSocket();
+  const { joinCourseRoom, setCourseRoomMessages } = useSocket();
 
   // FUNCTIONS
 
   // JSX JSX JSX
+
+  console.log(
+    "enrollments ----------------------------------------\n",
+    enrollments,
+  );
 
   // chat
   if (selectedEnrollment) {
@@ -61,6 +66,7 @@ const StudentEnrollmentsDashboard = ({
                 cardButtonContent={
                   <Button
                     onClick={() => {
+                      setCourseRoomMessages([]);
                       joinCourseRoom(enrollment?.course?.conversation);
                       setSelectedEnrollment(enrollment);
                     }}

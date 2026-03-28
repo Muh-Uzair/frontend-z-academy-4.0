@@ -26,7 +26,9 @@ interface ISocketContext {
     content: string;
     messageType: "text" | "file";
   }) => void;
+  leaveCourseRoom: (conversationId: string) => void;
   courseRoomMessages: IMessage[];
+  setCourseRoomMessages: React.Dispatch<React.SetStateAction<IMessage[]>>;
 }
 
 // context
@@ -81,6 +83,14 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   );
 
   // FUNCTION
+  const leaveCourseRoom = useCallback((conversationId: string) => {
+    if (socketRef.current) {
+      socketRef.current.emit("event:leave-course-room", { conversationId });
+      console.log(`Joining course room: ${conversationId}`);
+    }
+  }, []);
+
+  // FUNCTION
   useEffect(() => {
     const socket = io(process.env.NEXT_PUBLIC_SERVER_ADDRESS!, {
       reconnection: true,
@@ -112,7 +122,13 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   // JSX JSX JSX
   return (
     <SocketContext.Provider
-      value={{ joinCourseRoom, sendCourseMessage, courseRoomMessages }}
+      value={{
+        joinCourseRoom,
+        sendCourseMessage,
+        leaveCourseRoom,
+        courseRoomMessages,
+        setCourseRoomMessages,
+      }}
     >
       {children}
     </SocketContext.Provider>

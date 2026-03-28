@@ -12,6 +12,9 @@ import { EnrollmentType } from "@/types/enrollments-types";
 import { useSocket } from "@/providers/SocketProvider";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { IMessage } from "@/types/messages-types";
+import CenteredLoadingSpinner from "@/components/CenteredLoadingSpinner";
+import { getNameInitials } from "@/helpers/getNameInitials";
+import { formatMessageTime } from "@/helpers/formatMessageTime";
 // import { EnrollmentType } from "./DashboardStudentPublicChat";
 
 // Dummy message type (for now - later can come from real API/socket)
@@ -100,17 +103,20 @@ export default function PublicChat({
   // VARS
   const [messages, setMessages] = useState<IMessage[] | []>([]);
   const [newMessage, setNewMessage] = useState("");
-  const { sendCourseMessage, courseRoomMessages } = useSocket();
+  const { sendCourseMessage, courseRoomMessages, leaveCourseRoom } =
+    useSocket();
   const { user } = useAuthStore();
   const mergedMessages = useMemo(
     () => [...messages, ...courseRoomMessages],
     [messages, courseRoomMessages],
   );
+  const [isLoadingCourseChat, setIsLoadingCourseChat] = useState<boolean>(true);
 
   // FUNCTIONS
   useEffect(() => {
     const fetchMessages = async () => {
       try {
+        setIsLoadingCourseChat(true);
         const response = await fetch(
           `/api/messages/${enrollment.course.conversation}`,
         );
@@ -119,6 +125,8 @@ export default function PublicChat({
         setMessages(data.data.messages || []);
       } catch (error) {
         console.error("Fetch messages failed", error);
+      } finally {
+        setIsLoadingCourseChat(false);
       }
     };
 
@@ -140,6 +148,10 @@ export default function PublicChat({
     setNewMessage("");
   };
 
+  const handleLeaveCourseRoom = () => {
+    leaveCourseRoom(enrollment?.course?.conversation as string);
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -148,7 +160,14 @@ export default function PublicChat({
   };
 
   console.log(
-    "messagesData ---------------------------------------\n",
+    "conversation id ---------------------------------------\n",
+    enrollment.course.conversation,
+  );
+
+  console.log("messages ----------------------------------------\n", messages);
+
+  console.log(
+    "mergedMessages ---------------------------------------\n",
     mergedMessages,
   );
 
@@ -159,7 +178,7 @@ export default function PublicChat({
 
   // CMP CMP CMP
   return (
-    <div className="flex h-full flex-col bg-background">
+    <div className="flex h-full min-h-0 flex-col bg-background">
       {/* Header */}
       <div className="border-b p-4">
         <div className="flex items-center justify-between">
@@ -167,7 +186,10 @@ export default function PublicChat({
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setSelectedEnrollment(null)}
+              onClick={() => {
+                handleLeaveCourseRoom();
+                setSelectedEnrollment(null);
+              }}
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
@@ -183,50 +205,58 @@ export default function PublicChat({
       </div>
 
       {/* Messages Area */}
-      <ScrollArea className="flex-1 px-4 py-6">
-        <div className="space-y-6">
-          {mergedMessages.map((msg) => (
-            <div
-              key={msg._id}
-              className={`flex gap-3 ${
-                msg.sender.id === user?._id ? "justify-end" : "justify-start"
-              }`}
-            >
-              {msg.sender.id !== user?._id && (
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src="" alt={msg.sender.fullName} />
-                  <AvatarFallback>AS</AvatarFallback>
-                </Avatar>
-              )}
+      {isLoadingCourseChat && <CenteredLoadingSpinner />}
 
+      {!isLoadingCourseChat && (
+        <ScrollArea className="min-h-0 flex-1 px-4 py-6">
+          <div className="space-y-6">
+            {mergedMessages.map((msg) => (
               <div
-                className={`max-w-[70%] rounded-2xl px-4 py-3 ${
-                  msg.sender.id === user?._id
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted"
+                key={msg._id}
+                className={`flex gap-3 ${
+                  msg.sender.id === user?._id ? "justify-end" : "justify-start"
                 }`}
               >
-                <p className="text-sm">{msg.content}</p>
-                <p
-                  className={`mt-1 text-xs opacity-70 ${
-                    msg.sender.id === user?._id ? "text-right" : "text-left"
+                {msg.sender.id !== user?._id && (
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src="" alt={msg.sender.fullName} />
+                    <AvatarFallback>
+                      {getNameInitials(msg.sender.fullName)}
+                    </AvatarFallback>
+                  </Avatar>
+                )}
+
+                <div
+                  className={`max-w-[70%] rounded-2xl px-4 py-3 ${
+                    msg.sender.id === user?._id
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted"
                   }`}
                 >
-                  {/* {msg.createdAt} */}
-                  {"10:22 AM"}
-                </p>
-              </div>
+                  <p className="text-sm">{msg.content}</p>
+                  <p
+                    className={`mt-1 text-xs opacity-70 ${
+                      msg.sender.id === user?._id ? "text-right" : "text-left"
+                    }`}
+                  >
+                    {formatMessageTime(msg.createdAt)}
+                    {/* {"10:22 AM"} */}
+                  </p>
+                </div>
 
-              {msg.sender.id === user?._id && (
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src="" alt="You" />
-                  <AvatarFallback>YO</AvatarFallback>
-                </Avatar>
-              )}
-            </div>
-          ))}
-        </div>
-      </ScrollArea>
+                {msg.sender.id === user?._id && (
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src="" alt="You" />
+                    <AvatarFallback>
+                      {getNameInitials(msg.sender.fullName)}
+                    </AvatarFallback>
+                  </Avatar>
+                )}
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
+      )}
 
       {/* Message Input - Now using Textarea with fixed height and internal scroll */}
       <div className="border-t p-4">
@@ -239,13 +269,14 @@ export default function PublicChat({
               onKeyDown={handleKeyDown}
               className="min-h-20 max-h-30 resize-none" // Fixed min/max height, no resize
               rows={1} // Starts with 1 row
+              disabled={isLoadingCourseChat}
             />
           </div>
           <div className="flex items-start">
             <Button
               size="icon"
               onClick={handleSendMessage}
-              disabled={!newMessage.trim()}
+              disabled={!newMessage.trim() || isLoadingCourseChat}
               className="mb-1" // Align with bottom of textarea
             >
               <Send className="h-5 w-5" />
