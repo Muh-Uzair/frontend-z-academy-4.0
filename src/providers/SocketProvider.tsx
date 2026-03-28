@@ -4,8 +4,8 @@ import { IMessage } from "@/types/messages-types";
 import {
   createContext,
   useCallback,
-  useEffect,
   useContext,
+  useEffect,
   useRef,
   useState,
 } from "react";
@@ -29,24 +29,21 @@ interface ISocketContext {
   leaveCourseRoom: (conversationId: string) => void;
   courseRoomMessages: IMessage[];
   setCourseRoomMessages: React.Dispatch<React.SetStateAction<IMessage[]>>;
+  isSocketConnected: boolean;
+  socketError: string | null;
+  clearSocketError: () => void;
 }
 
-// context
 const SocketContext = createContext<ISocketContext | null>(null);
 
-// custom hook
-
-// CMP CMP CMP
 export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
-  // VARS
   const socketRef = useRef<Socket | null>(null);
   const [courseRoomMessages, setCourseRoomMessages] = useState<IMessage[] | []>(
     [],
   );
+  const [isSocketConnected, setIsSocketConnected] = useState(false);
+  const [socketError, setSocketError] = useState<string | null>(null);
 
-  // FUNCTIONS
-
-  // FUNCTION Join Course Room
   const joinCourseRoom = useCallback((conversationId: string) => {
     if (socketRef.current) {
       socketRef.current.emit("event:join-course-room", { conversationId });
@@ -54,7 +51,6 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, []);
 
-  // FUNCTION Send Message in Course
   const sendCourseMessage = useCallback(
     (data: {
       conversation: string;
@@ -69,28 +65,32 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       content: string;
       messageType: "text" | "file";
     }) => {
-      if (socketRef.current) {
-        socketRef.current.emit("event:course-message", {
-          conversation: data.conversation,
-          sender: data.sender,
-          receiver: data.receiver,
-          content: data.content,
-          messageType: data.messageType,
-        });
+      if (!socketRef.current?.connected) {
+        throw new Error("Chat is currently disconnected. Please try again.");
       }
+
+      socketRef.current.emit("event:course-message", {
+        conversation: data.conversation,
+        sender: data.sender,
+        receiver: data.receiver,
+        content: data.content,
+        messageType: data.messageType,
+      });
     },
     [],
   );
 
-  // FUNCTION
   const leaveCourseRoom = useCallback((conversationId: string) => {
     if (socketRef.current) {
       socketRef.current.emit("event:leave-course-room", { conversationId });
-      console.log(`Joining course room: ${conversationId}`);
+      console.log(`Leaving course room: ${conversationId}`);
     }
   }, []);
 
-  // FUNCTION
+  const clearSocketError = useCallback(() => {
+    setSocketError(null);
+  }, []);
+
   useEffect(() => {
     const socket = io(process.env.NEXT_PUBLIC_SERVER_ADDRESS!, {
       reconnection: true,
@@ -99,18 +99,28 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
     socketRef.current = socket;
 
-    socketRef.current.on("connect", () => {
-      console.log("✅ Socket connected:", socket.id);
+    socket.on("connect", () => {
+      setIsSocketConnected(true);
+      setSocketError(null);
+      console.log("Socket connected:", socket.id);
     });
 
-    // LISTENERS
-    socketRef.current.on("event:course-message", (message: IMessage) => {
-      console.log("📩 New message:", message);
+    socket.on("connect_error", () => {
+      setIsSocketConnected(false);
+      setSocketError("Unable to connect to chat. Please try again.");
+    });
+
+    socket.on("event:course-message", (message: IMessage) => {
+      console.log("New message:", message);
       setCourseRoomMessages((prev) => [...prev, message]);
     });
 
-    socketRef.current.on("disconnect", () => {
-      console.log("❌ Socket disconnected");
+    socket.on("disconnect", (reason) => {
+      setIsSocketConnected(false);
+      if (reason !== "io client disconnect") {
+        setSocketError("Chat connection lost. Messages may not update.");
+      }
+      console.log("Socket disconnected");
     });
 
     return () => {
@@ -119,7 +129,6 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
-  // JSX JSX JSX
   return (
     <SocketContext.Provider
       value={{
@@ -128,6 +137,9 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         leaveCourseRoom,
         courseRoomMessages,
         setCourseRoomMessages,
+        isSocketConnected,
+        socketError,
+        clearSocketError,
       }}
     >
       {children}

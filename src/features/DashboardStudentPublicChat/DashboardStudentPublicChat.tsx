@@ -27,10 +27,10 @@ const StudentEnrollmentsDashboard = ({
 
   // JSX JSX JSX
 
-  console.log(
-    "enrollments ----------------------------------------\n",
-    enrollments,
-  );
+  // console.log(
+  //   "enrollments ----------------------------------------\n",
+  //   enrollments,
+  // );
 
   // chat
   if (selectedEnrollment) {

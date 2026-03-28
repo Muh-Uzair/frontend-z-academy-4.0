@@ -30,10 +30,10 @@ export async function GET(
           "Content-Type": "application/json",
           Cookie: cookieHeader,
         },
-        next: {
-          revalidate: revalidateTime,
-          tags: ["messages", conversationId],
-        },
+        // next: {
+        //   revalidate: revalidateTime,
+        //   tags: ["messages", conversationId],
+        // },
       },
     );
 
