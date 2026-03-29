@@ -61,6 +61,10 @@ interface ISocketContext {
     content: string;
     messageType: "text" | "file";
   }) => void;
+  courseRoomPrivateMessages: IMessage[];
+  setCourseRoomPrivateMessages: React.Dispatch<
+    React.SetStateAction<IMessage[] | []>
+  >;
 }
 
 const SocketContext = createContext<ISocketContext | null>(null);
@@ -76,6 +80,9 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const [socketError, setSocketError] = useState<string | null>(null);
   const [currentPrivateConversation, setCurrentPrivateConversation] =
     useState<IConversation | null>(null);
+  const [courseRoomPrivateMessages, setCourseRoomPrivateMessages] = useState<
+    IMessage[] | []
+  >([]);
 
   // FUNCTIONS
 
@@ -214,6 +221,11 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       },
     );
 
+    socket.on("event:course-private-message", (message: IMessage) => {
+      console.log("New message:", message);
+      setCourseRoomPrivateMessages((prev) => [...prev, message]);
+    });
+
     socket.on("disconnect", (reason) => {
       setIsSocketConnected(false);
       if (reason !== "io client disconnect") {
@@ -244,6 +256,8 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         currentPrivateConversation,
         setCurrentPrivateConversation,
         sendCoursePrivateMessage,
+        courseRoomPrivateMessages,
+        setCourseRoomPrivateMessages,
       }}
     >
       {children}

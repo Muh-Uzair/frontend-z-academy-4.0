@@ -11,92 +11,7 @@ import PrivateChatSidebar, {
 import { ApiResponse } from "@/types/api-response-types";
 import { toast } from "sonner";
 import { useSocket } from "@/providers/SocketProvider";
-
-type Message = {
-  id: string;
-  sender: "student" | "instructor";
-  content: string;
-  timestamp: string;
-  senderName: string;
-};
-
-const dummyMessages: Message[] = [
-  {
-    id: "1",
-    sender: "instructor",
-    senderName: "Sir Ahmed",
-    content: "Hello Muhammad! How can I help you today?",
-    timestamp: "11:05 AM",
-  },
-  {
-    id: "2",
-    sender: "student",
-    senderName: "Muhammad",
-    content: "Assalam-o-Alaikum sir, assignment 2 mein error aa raha hai.",
-    timestamp: "11:07 AM",
-  },
-  {
-    id: "3",
-    sender: "instructor",
-    senderName: "Sir Ahmed",
-    content: "Walaikum Assalam! Can you share the exact error message?",
-    timestamp: "11:08 AM",
-  },
-  {
-    id: "4",
-    sender: "student",
-    senderName: "Muhammad",
-    content:
-      "Yes sir, yeh error aa raha hai: TypeError: Cannot read properties of undefined (reading 'map')",
-    timestamp: "11:10 AM",
-  },
-  {
-    id: "5",
-    sender: "instructor",
-    senderName: "Sir Ahmed",
-    content:
-      "Looks like you're trying to map over something that's undefined. Can you share the line of code?",
-    timestamp: "11:12 AM",
-  },
-  {
-    id: "6",
-    sender: "student",
-    senderName: "Muhammad",
-    content:
-      "Sure sir, yeh line hai: const items = data.items.map(item => item.name);",
-    timestamp: "11:14 AM",
-  },
-  {
-    id: "7",
-    sender: "instructor",
-    senderName: "Sir Ahmed",
-    content:
-      "Add a check before mapping: if (!data?.items) return; or use optional chaining: data?.items?.map(...)",
-    timestamp: "11:16 AM",
-  },
-  {
-    id: "8",
-    sender: "student",
-    senderName: "Muhammad",
-    content: "Ji sir, try karta hoon abhi. Thank you!",
-    timestamp: "11:18 AM",
-  },
-  {
-    id: "9",
-    sender: "instructor",
-    senderName: "Sir Ahmed",
-    content:
-      "You're welcome! Let me know if it works or if there's another issue.",
-    timestamp: "11:19 AM",
-  },
-  {
-    id: "10",
-    sender: "student",
-    senderName: "Muhammad",
-    content: "Sir abhi theek ho gaya. Bohot shukriya!",
-    timestamp: "11:21 AM",
-  },
-];
+import { IMessage } from "@/types/messages-types";
 
 interface PrivateChatProps {
   enrollment: EnrollmentType;
@@ -113,7 +28,7 @@ export default function PrivateChat({
   // VARS
   const [courseStudentInstructorList, setCourseStudentInstructorList] =
     useState<CourseStudentInstructorListItem[]>([]);
-  const [messages, setMessages] = useState<Message[]>(dummyMessages);
+  const [messages, setMessages] = useState<IMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [
@@ -132,10 +47,15 @@ export default function PrivateChat({
     joinCoursePrivateRoom,
     sendCoursePrivateMessage,
     currentPrivateConversation,
+    courseRoomPrivateMessages,
   } = useSocket();
   const [isLoadingCoursePrivateChat, setIsLoadingCoursePrivateChat] =
     useState(true);
   const [chatError, setChatError] = useState<string | null>(null);
+  const mergedMessages = useMemo(
+    () => [...messages, ...courseRoomPrivateMessages],
+    [messages, courseRoomPrivateMessages],
+  );
 
   // FUNCTION
   const filteredCourseStudentInstructorList = useMemo(() => {
@@ -263,6 +183,10 @@ export default function PrivateChat({
 
   // FUNCTION
   const fetchMessages = useCallback(async () => {
+    if (!currentPrivateConversation?._id) {
+      return;
+    }
+
     try {
       setIsLoadingCoursePrivateChat(true);
       setChatError(null);
@@ -287,7 +211,7 @@ export default function PrivateChat({
     } finally {
       setIsLoadingCoursePrivateChat(false);
     }
-  }, [enrollment.course.conversation]);
+  }, [currentPrivateConversation?._id]);
 
   useEffect(() => {
     fetchMessages();
@@ -296,6 +220,11 @@ export default function PrivateChat({
   // console.log(
   //   "enrollment --------------------------------------\n",
   //   enrollment,
+  // );
+
+  // console.log(
+  //   "currentPrivateConversation -------------------------------------- \n",
+  //   currentPrivateConversation,
   // );
 
   // JSX JSX JSX
@@ -311,13 +240,14 @@ export default function PrivateChat({
         onSelectCourseStudentInstructor={setSelectedCourseStudentInstructorId}
         isLoadingSidebar={isLoadingSidebar}
         selectedCourse={enrollment.course?._id}
+        setNewMessage={setNewMessage}
       />
 
       {selectedCourseStudentInstructor ? (
         <PrivateChatPanel
           enrollment={enrollment}
           selectedCourseStudentInstructor={selectedCourseStudentInstructor}
-          messages={messages}
+          messages={mergedMessages}
           newMessage={newMessage}
           onMessageChange={setNewMessage}
           onSendMessage={handleSendMessage}
