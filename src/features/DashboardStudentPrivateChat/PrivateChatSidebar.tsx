@@ -38,7 +38,7 @@ export default function PrivateChatSidebar({
   onSelectParticipant,
 }: PrivateChatSidebarProps) {
   return (
-    <div className="flex w-[320px] min-h-0 shrink-0 flex-col rounded-2xl border bg-card">
+    <div className="flex w-[320px] min-h-0 min-w-0 shrink-0 flex-col rounded-2xl border bg-card">
       <div className="border-b p-4">
         <div className="relative">
           <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
@@ -52,7 +52,7 @@ export default function PrivateChatSidebar({
       </div>
 
       <ScrollArea className="min-h-0 flex-1">
-        <div className="space-y-2 p-3">
+        <div className="min-w-0 space-y-2 p-3">
           {participants.map((participant) => {
             const isSelected = participant.id === selectedParticipantId;
 
@@ -61,7 +61,7 @@ export default function PrivateChatSidebar({
                 key={participant.id}
                 type="button"
                 onClick={() => onSelectParticipant(participant.id)}
-                className={`flex w-full items-start gap-3 rounded-xl border px-3 py-3 text-left transition-colors ${
+                className={`grid w-full min-w-0 grid-cols-[auto_minmax(0,1fr)] items-start gap-3 overflow-hidden rounded-xl border px-3 py-3 text-left transition-colors ${
                   isSelected
                     ? "border-primary bg-primary/10"
                     : "border-transparent hover:bg-muted/70"
@@ -83,14 +83,16 @@ export default function PrivateChatSidebar({
                   />
                 </div>
 
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="truncate font-medium">{participant.fullName}</p>
-                    <span className="text-xs capitalize text-muted-foreground">
+                <div className="min-w-0 overflow-hidden">
+                  <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+                    <p className="truncate font-medium">
+                      {participant.fullName}
+                    </p>
+                    <span className="shrink-0 text-xs capitalize text-muted-foreground">
                       {participant.role}
                     </span>
                   </div>
-                  <p className="mt-1 truncate text-sm text-muted-foreground">
+                  <p className="mt-1 block max-w-full overflow-hidden whitespace-nowrap text-ellipsis text-sm text-muted-foreground">
                     {participant.lastMessage}
                   </p>
                 </div>

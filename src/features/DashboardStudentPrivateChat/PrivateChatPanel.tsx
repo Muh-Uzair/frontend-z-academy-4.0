@@ -51,10 +51,6 @@ export default function PrivateChatPanel({
       <div className="border-b p-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={onBack}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-
             <div className="flex items-center gap-3">
               <Avatar className="h-10 w-10">
                 <AvatarImage src="" alt={selectedParticipant.fullName} />
@@ -63,7 +59,9 @@ export default function PrivateChatPanel({
                 </AvatarFallback>
               </Avatar>
               <div>
-                <h2 className="font-semibold">{selectedParticipant.fullName}</h2>
+                <h2 className="font-semibold">
+                  {selectedParticipant.fullName}
+                </h2>
                 <p className="text-sm text-muted-foreground">
                   {selectedParticipant.role === "instructor"
                     ? "Instructor"

@@ -184,7 +184,7 @@ export default function PrivateChat({
   };
 
   return (
-    <div className="flex h-full min-h-0 gap-4 bg-background">
+    <div className="flex h-full min-h-0 gap-4 bg-background p-3">
       <PrivateChatSidebar
         participants={filteredParticipants}
         searchTerm={searchTerm}
