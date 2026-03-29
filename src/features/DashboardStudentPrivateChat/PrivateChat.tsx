@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { toTitleCase } from "@/helpers/toTitleCase";
 import { EnrollmentType } from "@/types/enrollments-types";
 import PrivateChatPanel from "./PrivateChatPanel";
 import PrivateChatSidebar, {
@@ -17,51 +18,6 @@ type Message = {
   timestamp: string;
   senderName: string;
 };
-
-const dummyCourseStudentInstructorList: CourseStudentInstructorListItem[] = [
-  {
-    id: "instructor-1",
-    fullName: "Sir Ahmed",
-    role: "instructor",
-    status: "online",
-    lastMessage: "Can you share the exact error message?",
-  },
-  {
-    id: "student-1",
-    fullName: "Muhammad Uzair",
-    role: "student",
-    status: "online",
-    lastMessage: "I have fixed that bug now.",
-  },
-  {
-    id: "student-2",
-    fullName: "Ali Raza",
-    role: "student",
-    status: "offline",
-    lastMessage: "Does anyone have the assignment solution idea?",
-  },
-  {
-    id: "student-3",
-    fullName: "Ayesha Khan",
-    role: "student",
-    status: "online",
-    lastMessage: "I can help with the React state issue.",
-  },
-  {
-    id: "student-4",
-    fullName: "Fatima Noor",
-    role: "student",
-    status: "offline",
-    lastMessage: "Please share the class recording link.",
-  },
-  {
-    id: "student-5",
-    fullName: "Hassan Tariq",
-    role: "student",
-    status: "online",
-    lastMessage: "I will join the discussion in 10 minutes.",
-  },
-];
 
 const dummyMessages: Message[] = [
   {
@@ -154,31 +110,34 @@ export default function PrivateChat({
   setSelectedEnrollment,
 }: PrivateChatProps) {
   // VARS
+  const [courseStudentInstructorList, setCourseStudentInstructorList] =
+    useState<CourseStudentInstructorListItem[]>([]);
   const [messages] = useState<Message[]>(dummyMessages);
   const [newMessage, setNewMessage] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [
     selectedCourseStudentInstructorId,
     setSelectedCourseStudentInstructorId,
-  ] = useState(dummyCourseStudentInstructorList[0]?.id ?? "");
+  ] = useState("");
+  const [isLoadingSidebar, setIsLoadingSidebar] = useState(true);
 
   // FUNCTION
   const filteredCourseStudentInstructorList = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
 
-    if (!normalizedSearch) return dummyCourseStudentInstructorList;
+    if (!normalizedSearch) return courseStudentInstructorList;
 
-    return dummyCourseStudentInstructorList.filter((courseStudentInstructor) =>
+    return courseStudentInstructorList.filter((courseStudentInstructor) =>
       courseStudentInstructor.fullName.toLowerCase().includes(normalizedSearch),
     );
-  }, [searchTerm]);
+  }, [courseStudentInstructorList, searchTerm]);
 
   // FUNCTION
   const selectedCourseStudentInstructor =
-    dummyCourseStudentInstructorList.find(
+    courseStudentInstructorList.find(
       (courseStudentInstructor) =>
         courseStudentInstructor.id === selectedCourseStudentInstructorId,
-    ) ?? dummyCourseStudentInstructorList[0];
+    ) ?? courseStudentInstructorList[0];
 
   // FUNCTION
   const handleSendMessage = () => {
@@ -198,6 +157,8 @@ export default function PrivateChat({
   // FUNCTION
   const getCourseStudentInstructorList = useCallback(async () => {
     try {
+      setIsLoadingSidebar(true);
+
       const response = await fetch(
         `/api/courses/get-course-student-instructor-list/${enrollment.course._id}`,
       );
@@ -209,9 +170,36 @@ export default function PrivateChat({
         );
       }
 
-      console.log(
-        "data -------------------------------------\n",
-        data.data.courseStudentInstructorList,
+      const normalizedCourseStudentInstructorList: CourseStudentInstructorListItem[] =
+        Array.isArray(data.data?.courseStudentInstructorList)
+          ? data.data.courseStudentInstructorList.map(
+              (
+                courseStudentInstructor: {
+                  _id: string;
+                  fullName: string;
+                  role: "student" | "instructor";
+                },
+                index: number,
+              ) => ({
+                id:
+                  typeof courseStudentInstructor._id === "string"
+                    ? courseStudentInstructor._id
+                    : `course-student-instructor-${index}`,
+                fullName: toTitleCase(courseStudentInstructor.fullName),
+                role:
+                  toTitleCase(courseStudentInstructor.role).toLowerCase() ===
+                  "instructor"
+                    ? "instructor"
+                    : "student",
+                status: "offline",
+                lastMessage: "",
+              }),
+            )
+          : [];
+
+      setCourseStudentInstructorList(normalizedCourseStudentInstructorList);
+      setSelectedCourseStudentInstructorId(
+        normalizedCourseStudentInstructorList[0]?.id ?? "",
       );
     } catch (error) {
       const errorMessage =
@@ -221,6 +209,7 @@ export default function PrivateChat({
 
       toast.error(errorMessage);
     } finally {
+      setIsLoadingSidebar(false)
     }
   }, [enrollment.course._id]);
 
@@ -243,17 +232,24 @@ export default function PrivateChat({
         onBack={() => setSelectedEnrollment(null)}
         onSearchChange={setSearchTerm}
         onSelectCourseStudentInstructor={setSelectedCourseStudentInstructorId}
+        isLoadingSidebar={isLoadingSidebar}
       />
 
-      <PrivateChatPanel
-        enrollment={enrollment}
-        selectedCourseStudentInstructor={selectedCourseStudentInstructor}
-        messages={messages}
-        newMessage={newMessage}
-        onMessageChange={setNewMessage}
-        onSendMessage={handleSendMessage}
-        onKeyDown={handleKeyDown}
-      />
+      {selectedCourseStudentInstructor ? (
+        <PrivateChatPanel
+          enrollment={enrollment}
+          selectedCourseStudentInstructor={selectedCourseStudentInstructor}
+          messages={messages}
+          newMessage={newMessage}
+          onMessageChange={setNewMessage}
+          onSendMessage={handleSendMessage}
+          onKeyDown={handleKeyDown}
+        />
+      ) : (
+        <div className="flex min-h-0 min-w-0 flex-1 items-center justify-center rounded-2xl border bg-background p-6 text-center text-sm text-muted-foreground">
+          No students or instructor found for this course yet.
+        </div>
+      )}
     </div>
   );
 }
