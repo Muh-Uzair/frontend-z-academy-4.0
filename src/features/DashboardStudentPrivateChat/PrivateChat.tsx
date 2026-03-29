@@ -10,6 +10,7 @@ import PrivateChatSidebar, {
 } from "./PrivateChatSidebar";
 import { ApiResponse } from "@/types/api-response-types";
 import { toast } from "sonner";
+import { useSocket } from "@/providers/SocketProvider";
 
 type Message = {
   id: string;
@@ -120,6 +121,18 @@ export default function PrivateChat({
     setSelectedCourseStudentInstructorId,
   ] = useState("");
   const [isLoadingSidebar, setIsLoadingSidebar] = useState(true);
+  const currentChatUser = useMemo(
+    () => ({
+      id: enrollment.student._id,
+      fullName: toTitleCase(enrollment.student.fullName),
+    }),
+    [enrollment.student._id, enrollment.student.fullName],
+  );
+  const {
+    joinCoursePrivateRoom,
+    sendCoursePrivateMessage,
+    currentPrivateConversation,
+  } = useSocket();
 
   // FUNCTION
   const filteredCourseStudentInstructorList = useMemo(() => {
@@ -141,8 +154,25 @@ export default function PrivateChat({
 
   // FUNCTION
   const handleSendMessage = () => {
-    if (!newMessage.trim()) return;
-    console.log("Sending private message:", newMessage);
+    const trimmedMessage = newMessage.trim();
+
+    if (!trimmedMessage || !selectedCourseStudentInstructor) return;
+
+    if (!currentPrivateConversation?.privateChatConversationId) {
+      toast.error("Private conversation is not ready yet. Please try again.");
+      return;
+    }
+
+    sendCoursePrivateMessage({
+      conversation: currentPrivateConversation.privateChatConversationId,
+      sender: currentChatUser,
+      receiver: {
+        id: selectedCourseStudentInstructor.id,
+        fullName: selectedCourseStudentInstructor.fullName,
+      },
+      content: trimmedMessage,
+      messageType: "text",
+    });
     setNewMessage("");
   };
 
@@ -198,9 +228,20 @@ export default function PrivateChat({
           : [];
 
       setCourseStudentInstructorList(normalizedCourseStudentInstructorList);
+
       setSelectedCourseStudentInstructorId(
         normalizedCourseStudentInstructorList[0]?.id ?? "",
       );
+      if (normalizedCourseStudentInstructorList[0]) {
+        joinCoursePrivateRoom({
+          course: enrollment.course._id,
+          sender: currentChatUser,
+          receiver: {
+            id: normalizedCourseStudentInstructorList[0].id,
+            fullName: normalizedCourseStudentInstructorList[0].fullName,
+          },
+        });
+      }
     } catch (error) {
       const errorMessage =
         error instanceof Error
@@ -209,9 +250,9 @@ export default function PrivateChat({
 
       toast.error(errorMessage);
     } finally {
-      setIsLoadingSidebar(false)
+      setIsLoadingSidebar(false);
     }
-  }, [enrollment.course._id]);
+  }, [currentChatUser, enrollment.course._id, joinCoursePrivateRoom]);
 
   useEffect(() => {
     getCourseStudentInstructorList();
@@ -227,12 +268,14 @@ export default function PrivateChat({
     <div className="flex h-full min-h-0 gap-4 bg-background p-3">
       <PrivateChatSidebar
         courseStudentInstructorList={filteredCourseStudentInstructorList}
+        currentChatUser={currentChatUser}
         searchTerm={searchTerm}
         selectedCourseStudentInstructorId={selectedCourseStudentInstructorId}
         onBack={() => setSelectedEnrollment(null)}
         onSearchChange={setSearchTerm}
         onSelectCourseStudentInstructor={setSelectedCourseStudentInstructorId}
         isLoadingSidebar={isLoadingSidebar}
+        selectedCourse={enrollment.course?._id}
       />
 
       {selectedCourseStudentInstructor ? (

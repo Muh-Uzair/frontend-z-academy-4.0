@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import CenteredLoadingSpinner from "@/components/CenteredLoadingSpinner";
+import { useSocket } from "@/providers/SocketProvider";
 
 export type CourseStudentInstructorListItem = {
   id: string;
@@ -20,23 +21,38 @@ export type CourseStudentInstructorListItem = {
 
 interface PrivateChatSidebarProps {
   courseStudentInstructorList: CourseStudentInstructorListItem[];
+  currentChatUser: {
+    id: string;
+    fullName: string;
+  };
   searchTerm: string;
   selectedCourseStudentInstructorId: string;
   onBack: () => void;
   onSearchChange: (value: string) => void;
   onSelectCourseStudentInstructor: (courseStudentInstructorId: string) => void;
   isLoadingSidebar: boolean;
+  selectedCourse: string;
 }
 
+// CMP CMP CMP
 export default function PrivateChatSidebar({
   courseStudentInstructorList,
+  currentChatUser,
   searchTerm,
   selectedCourseStudentInstructorId,
   onBack,
   onSearchChange,
   onSelectCourseStudentInstructor,
   isLoadingSidebar,
+  selectedCourse,
 }: PrivateChatSidebarProps) {
+  // VARS
+
+  const { joinCoursePrivateRoom } = useSocket();
+
+  // FUNCTIONS
+
+  // CMP CMP CMP
   return (
     <div className="flex w-[320px] min-h-0 min-w-0 shrink-0 flex-col rounded-2xl border bg-card">
       <div className="flex gap-2 border-b p-4">
@@ -75,9 +91,17 @@ export default function PrivateChatSidebar({
                 <button
                   key={courseStudentInstructor.id}
                   type="button"
-                  onClick={() =>
-                    onSelectCourseStudentInstructor(courseStudentInstructor.id)
-                  }
+                  onClick={() => {
+                    joinCoursePrivateRoom({
+                      course: selectedCourse,
+                      sender: currentChatUser,
+                      receiver: {
+                        id: courseStudentInstructor.id,
+                        fullName: courseStudentInstructor.fullName,
+                      },
+                    });
+                    onSelectCourseStudentInstructor(courseStudentInstructor.id);
+                  }}
                   className={`grid w-full min-w-0 grid-cols-[auto_minmax(0,1fr)] items-start gap-3 overflow-hidden rounded-xl border px-3 py-3 text-left transition-colors ${
                     isSelected
                       ? "border-primary bg-primary/10"

@@ -1,5 +1,6 @@
 "use client";
 
+import { IConversation } from "@/types/conversation-types";
 import { IMessage } from "@/types/messages-types";
 import {
   createContext,
@@ -32,18 +33,53 @@ interface ISocketContext {
   isSocketConnected: boolean;
   socketError: string | null;
   clearSocketError: () => void;
+  joinCoursePrivateRoom: (data: {
+    course: string;
+    sender: {
+      id: string;
+      fullName: string;
+    };
+    receiver: {
+      id: string;
+      fullName: string;
+    };
+  }) => void;
+  currentPrivateConversation: IConversation | null;
+  setCurrentPrivateConversation: React.Dispatch<
+    React.SetStateAction<IConversation | null>
+  >;
+  sendCoursePrivateMessage: (data: {
+    conversation: string;
+    sender: {
+      id: string;
+      fullName: string;
+    };
+    receiver: {
+      id: string;
+      fullName: string;
+    } | null;
+    content: string;
+    messageType: "text" | "file";
+  }) => void;
 }
 
 const SocketContext = createContext<ISocketContext | null>(null);
 
+// CMP CMP CMP
 export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
+  // VARS
   const socketRef = useRef<Socket | null>(null);
   const [courseRoomMessages, setCourseRoomMessages] = useState<IMessage[] | []>(
     [],
   );
   const [isSocketConnected, setIsSocketConnected] = useState(false);
   const [socketError, setSocketError] = useState<string | null>(null);
+  const [currentPrivateConversation, setCurrentPrivateConversation] =
+    useState<IConversation | null>(null);
 
+  // FUNCTIONS
+
+  // FUNCTION
   const joinCourseRoom = useCallback((conversationId: string) => {
     if (socketRef.current) {
       socketRef.current.emit("event:join-course-room", { conversationId });
@@ -51,6 +87,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, []);
 
+  // FUNCTION
   const sendCourseMessage = useCallback(
     (data: {
       conversation: string;
@@ -80,6 +117,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     [],
   );
 
+  // FUNCTION
   const leaveCourseRoom = useCallback((conversationId: string) => {
     if (socketRef.current) {
       socketRef.current.emit("event:leave-course-room", { conversationId });
@@ -87,10 +125,63 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, []);
 
+  // FUNCTION
   const clearSocketError = useCallback(() => {
     setSocketError(null);
   }, []);
 
+  // FUNCTION
+  const joinCoursePrivateRoom = useCallback(
+    (data: {
+      course: string;
+      sender: {
+        id: string;
+        fullName: string;
+      };
+      receiver: {
+        id: string;
+        fullName: string;
+      };
+    }) => {
+      if (socketRef.current) {
+        socketRef.current.emit("event:join-course-private-room", data);
+        console.log("Joining course private room:", data);
+      }
+    },
+    [],
+  );
+
+  // FUNCTION
+  const sendCoursePrivateMessage = useCallback(
+    (data: {
+      conversation: string;
+      sender: {
+        id: string;
+        fullName: string;
+      };
+      receiver: {
+        id: string;
+        fullName: string;
+      } | null;
+      content: string;
+      messageType: "text" | "file";
+    }) => {
+      if (!socketRef.current?.connected) {
+        throw new Error("Chat is currently disconnected. Please try again.");
+      }
+
+      socketRef.current.emit("event:course-private-message", {
+        conversation: data.conversation,
+        sender: data.sender,
+        receiver: data.receiver,
+        content: data.content,
+        messageType: data.messageType,
+      });
+    },
+    [],
+  );
+
+  // FUNCTION
   useEffect(() => {
     const socket = io(process.env.NEXT_PUBLIC_SERVER_ADDRESS!, {
       reconnection: true,
@@ -115,6 +206,14 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       setCourseRoomMessages((prev) => [...prev, message]);
     });
 
+    socket.on(
+      "event:course-private-conversation-info",
+      (conversation: IConversation) => {
+        console.log("joined private room successfully", conversation);
+        setCurrentPrivateConversation(conversation);
+      },
+    );
+
     socket.on("disconnect", (reason) => {
       setIsSocketConnected(false);
       if (reason !== "io client disconnect") {
@@ -129,6 +228,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
+  // JSX JSX JSX
   return (
     <SocketContext.Provider
       value={{
@@ -140,6 +240,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         isSocketConnected,
         socketError,
         clearSocketError,
+        joinCoursePrivateRoom,
+        currentPrivateConversation,
+        setCurrentPrivateConversation,
+        sendCoursePrivateMessage,
       }}
     >
       {children}
