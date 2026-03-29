@@ -113,7 +113,7 @@ export default function PrivateChat({
   // VARS
   const [courseStudentInstructorList, setCourseStudentInstructorList] =
     useState<CourseStudentInstructorListItem[]>([]);
-  const [messages] = useState<Message[]>(dummyMessages);
+  const [messages, setMessages] = useState<Message[]>(dummyMessages);
   const [newMessage, setNewMessage] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [
@@ -133,6 +133,9 @@ export default function PrivateChat({
     sendCoursePrivateMessage,
     currentPrivateConversation,
   } = useSocket();
+  const [isLoadingCoursePrivateChat, setIsLoadingCoursePrivateChat] =
+    useState(true);
+  const [chatError, setChatError] = useState<string | null>(null);
 
   // FUNCTION
   const filteredCourseStudentInstructorList = useMemo(() => {
@@ -258,6 +261,38 @@ export default function PrivateChat({
     getCourseStudentInstructorList();
   }, [getCourseStudentInstructorList]);
 
+  // FUNCTION
+  const fetchMessages = useCallback(async () => {
+    try {
+      setIsLoadingCoursePrivateChat(true);
+      setChatError(null);
+      const response = await fetch(
+        `/api/messages/${currentPrivateConversation?._id}`,
+      );
+      const data: ApiResponse = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to load chat messages.");
+      }
+
+      setMessages(data.data.messages || []);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to load chat messages. Please try again.";
+
+      setChatError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setIsLoadingCoursePrivateChat(false);
+    }
+  }, [enrollment.course.conversation]);
+
+  useEffect(() => {
+    fetchMessages();
+  }, [fetchMessages]);
+
   // console.log(
   //   "enrollment --------------------------------------\n",
   //   enrollment,
@@ -287,6 +322,8 @@ export default function PrivateChat({
           onMessageChange={setNewMessage}
           onSendMessage={handleSendMessage}
           onKeyDown={handleKeyDown}
+          isLoadingCoursePrivateChat={isLoadingCoursePrivateChat}
+          chatError={chatError}
         />
       ) : (
         <div className="flex min-h-0 min-w-0 flex-1 items-center justify-center rounded-2xl border bg-background p-6 text-center text-sm text-muted-foreground">
