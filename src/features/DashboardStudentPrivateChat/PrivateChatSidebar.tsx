@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import CenteredLoadingSpinner from "@/components/CenteredLoadingSpinner";
 import { useSocket } from "@/providers/SocketProvider";
-import { IMessage } from "@/types/messages-types";
 
 export type CourseStudentInstructorListItem = {
   id: string;
@@ -33,7 +32,7 @@ interface PrivateChatSidebarProps {
   onSelectCourseStudentInstructor: (courseStudentInstructorId: string) => void;
   isLoadingSidebar: boolean;
   selectedCourse: string;
-  setNewMessage: React.Dispatch<React.SetStateAction<IMessage[] | []>>;
+  setNewMessage: React.Dispatch<React.SetStateAction<string>>;
 }
 
 // CMP CMP CMP
@@ -51,7 +50,7 @@ export default function PrivateChatSidebar({
 }: PrivateChatSidebarProps) {
   // VARS
 
-  const { joinCoursePrivateRoom, setCourseRoomPrivateMessages } = useSocket();
+  const { joinCoursePrivateRoom } = useSocket();
 
   // FUNCTIONS
 
@@ -64,8 +63,6 @@ export default function PrivateChatSidebar({
           variant="outline"
           size="icon"
           onClick={() => {
-            setNewMessage([]);
-            setCourseRoomPrivateMessages([]);
             onBack();
           }}
           aria-label="Go back"
@@ -99,8 +96,7 @@ export default function PrivateChatSidebar({
                   key={courseStudentInstructor.id}
                   type="button"
                   onClick={() => {
-                    setNewMessage([]);
-                    setCourseRoomPrivateMessages([]);
+                    setNewMessage("");
                     joinCoursePrivateRoom({
                       course: selectedCourse,
                       sender: currentChatUser,

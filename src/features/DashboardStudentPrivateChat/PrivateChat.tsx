@@ -48,6 +48,8 @@ export default function PrivateChat({
     sendCoursePrivateMessage,
     currentPrivateConversation,
     courseRoomPrivateMessages,
+    setCourseRoomPrivateMessages,
+    setCurrentPrivateConversation,
   } = useSocket();
   const [isLoadingCoursePrivateChat, setIsLoadingCoursePrivateChat] =
     useState(true);
@@ -74,6 +76,28 @@ export default function PrivateChat({
       (courseStudentInstructor) =>
         courseStudentInstructor.id === selectedCourseStudentInstructorId,
     ) ?? courseStudentInstructorList[0];
+
+  const resetPrivateChatState = useCallback(() => {
+    setMessages([]);
+    setNewMessage("");
+    setChatError(null);
+    setIsLoadingCoursePrivateChat(true);
+    setCourseRoomPrivateMessages([]);
+    setCurrentPrivateConversation(null);
+  }, [setCourseRoomPrivateMessages, setCurrentPrivateConversation]);
+
+  const handleBack = useCallback(() => {
+    resetPrivateChatState();
+    setSelectedEnrollment(null);
+  }, [resetPrivateChatState, setSelectedEnrollment]);
+
+  const handleSelectCourseStudentInstructor = useCallback(
+    (courseStudentInstructorId: string) => {
+      resetPrivateChatState();
+      setSelectedCourseStudentInstructorId(courseStudentInstructorId);
+    },
+    [resetPrivateChatState],
+  );
 
   // FUNCTION
   const handleSendMessage = () => {
@@ -235,9 +259,9 @@ export default function PrivateChat({
         currentChatUser={currentChatUser}
         searchTerm={searchTerm}
         selectedCourseStudentInstructorId={selectedCourseStudentInstructorId}
-        onBack={() => setSelectedEnrollment(null)}
+        onBack={handleBack}
         onSearchChange={setSearchTerm}
-        onSelectCourseStudentInstructor={setSelectedCourseStudentInstructorId}
+        onSelectCourseStudentInstructor={handleSelectCourseStudentInstructor}
         isLoadingSidebar={isLoadingSidebar}
         selectedCourse={enrollment.course?._id}
         setNewMessage={setNewMessage}
