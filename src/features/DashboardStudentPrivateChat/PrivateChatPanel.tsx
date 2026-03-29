@@ -1,13 +1,13 @@
 "use client";
 
 import React from "react";
-import { ArrowLeft, Send } from "lucide-react";
+import { Send } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { EnrollmentType } from "@/types/enrollments-types";
-import { Participant } from "./PrivateChatSidebar";
+import { CourseStudentInstructorListItem } from "./PrivateChatSidebar";
 
 type Message = {
   id: string;
@@ -19,12 +19,11 @@ type Message = {
 
 interface PrivateChatPanelProps {
   enrollment: EnrollmentType;
-  selectedParticipant: Participant;
+  selectedCourseStudentInstructor: CourseStudentInstructorListItem;
   messages: Message[];
   newMessage: string;
   onMessageChange: (value: string) => void;
   onSendMessage: () => void;
-  onBack: () => void;
   onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
 }
 
@@ -38,12 +37,11 @@ const getInitials = (name: string) =>
 
 export default function PrivateChatPanel({
   enrollment,
-  selectedParticipant,
+  selectedCourseStudentInstructor,
   messages,
   newMessage,
   onMessageChange,
   onSendMessage,
-  onBack,
   onKeyDown,
 }: PrivateChatPanelProps) {
   return (
@@ -53,17 +51,20 @@ export default function PrivateChatPanel({
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-3">
               <Avatar className="h-10 w-10">
-                <AvatarImage src="" alt={selectedParticipant.fullName} />
+                <AvatarImage
+                  src=""
+                  alt={selectedCourseStudentInstructor.fullName}
+                />
                 <AvatarFallback>
-                  {getInitials(selectedParticipant.fullName)}
+                  {getInitials(selectedCourseStudentInstructor.fullName)}
                 </AvatarFallback>
               </Avatar>
               <div>
                 <h2 className="font-semibold">
-                  {selectedParticipant.fullName}
+                  {selectedCourseStudentInstructor.fullName}
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  {selectedParticipant.role === "instructor"
+                  {selectedCourseStudentInstructor.role === "instructor"
                     ? "Instructor"
                     : "Student"}{" "}
                   • {enrollment.course.title}
@@ -75,7 +76,7 @@ export default function PrivateChatPanel({
           <div className="hidden text-right text-xs text-muted-foreground sm:block">
             <p>{enrollment.course.title}</p>
             <p>
-              {selectedParticipant.status === "online"
+              {selectedCourseStudentInstructor.status === "online"
                 ? "Online now"
                 : "Last seen recently"}
             </p>
@@ -130,7 +131,7 @@ export default function PrivateChatPanel({
       <div className="border-t p-4">
         <div className="flex items-end gap-2">
           <Textarea
-            placeholder={`Message ${selectedParticipant.fullName}...`}
+            placeholder={`Message ${selectedCourseStudentInstructor.fullName}...`}
             value={newMessage}
             onChange={(e) => onMessageChange(e.target.value)}
             onKeyDown={onKeyDown}

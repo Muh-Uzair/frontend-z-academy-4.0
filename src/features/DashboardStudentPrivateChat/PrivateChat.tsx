@@ -1,10 +1,14 @@
 // features/DashboardStudentPrivateChat/PrivateChat.tsx
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { EnrollmentType } from "@/types/enrollments-types";
 import PrivateChatPanel from "./PrivateChatPanel";
-import PrivateChatSidebar, { Participant } from "./PrivateChatSidebar";
+import PrivateChatSidebar, {
+  CourseStudentInstructorListItem,
+} from "./PrivateChatSidebar";
+import { ApiResponse } from "@/types/api-response-types";
+import { toast } from "sonner";
 
 type Message = {
   id: string;
@@ -14,7 +18,7 @@ type Message = {
   senderName: string;
 };
 
-const dummyParticipants: Participant[] = [
+const dummyCourseStudentInstructorList: CourseStudentInstructorListItem[] = [
   {
     id: "instructor-1",
     fullName: "Sir Ahmed",
@@ -144,38 +148,46 @@ interface PrivateChatProps {
   >;
 }
 
+// CMP CMP CMP
 export default function PrivateChat({
   enrollment,
   setSelectedEnrollment,
 }: PrivateChatProps) {
+  // VARS
   const [messages] = useState<Message[]>(dummyMessages);
   const [newMessage, setNewMessage] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedParticipantId, setSelectedParticipantId] = useState(
-    dummyParticipants[0]?.id ?? "",
-  );
+  const [
+    selectedCourseStudentInstructorId,
+    setSelectedCourseStudentInstructorId,
+  ] = useState(dummyCourseStudentInstructorList[0]?.id ?? "");
 
-  const filteredParticipants = useMemo(() => {
+  // FUNCTION
+  const filteredCourseStudentInstructorList = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
 
-    if (!normalizedSearch) return dummyParticipants;
+    if (!normalizedSearch) return dummyCourseStudentInstructorList;
 
-    return dummyParticipants.filter((participant) =>
-      participant.fullName.toLowerCase().includes(normalizedSearch),
+    return dummyCourseStudentInstructorList.filter((courseStudentInstructor) =>
+      courseStudentInstructor.fullName.toLowerCase().includes(normalizedSearch),
     );
   }, [searchTerm]);
 
-  const selectedParticipant =
-    dummyParticipants.find(
-      (participant) => participant.id === selectedParticipantId,
-    ) ?? dummyParticipants[0];
+  // FUNCTION
+  const selectedCourseStudentInstructor =
+    dummyCourseStudentInstructorList.find(
+      (courseStudentInstructor) =>
+        courseStudentInstructor.id === selectedCourseStudentInstructorId,
+    ) ?? dummyCourseStudentInstructorList[0];
 
+  // FUNCTION
   const handleSendMessage = () => {
     if (!newMessage.trim()) return;
     console.log("Sending private message:", newMessage);
     setNewMessage("");
   };
 
+  // FUNCTION
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -183,24 +195,63 @@ export default function PrivateChat({
     }
   };
 
+  // FUNCTION
+  const getCourseStudentInstructorList = useCallback(async () => {
+    try {
+      const response = await fetch(
+        `/api/courses/get-course-student-instructor-list/${enrollment.course._id}`,
+      );
+      const data: ApiResponse = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Failed to load course student instructor list.",
+        );
+      }
+
+      console.log(
+        "data -------------------------------------\n",
+        data.data.courseStudentInstructorList,
+      );
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to load course student instructor list. Please try again.";
+
+      toast.error(errorMessage);
+    } finally {
+    }
+  }, [enrollment.course._id]);
+
+  useEffect(() => {
+    getCourseStudentInstructorList();
+  }, [getCourseStudentInstructorList]);
+
+  // console.log(
+  //   "enrollment --------------------------------------\n",
+  //   enrollment,
+  // );
+
+  // JSX JSX JSX
   return (
     <div className="flex h-full min-h-0 gap-4 bg-background p-3">
       <PrivateChatSidebar
-        participants={filteredParticipants}
+        courseStudentInstructorList={filteredCourseStudentInstructorList}
         searchTerm={searchTerm}
-        selectedParticipantId={selectedParticipantId}
+        selectedCourseStudentInstructorId={selectedCourseStudentInstructorId}
+        onBack={() => setSelectedEnrollment(null)}
         onSearchChange={setSearchTerm}
-        onSelectParticipant={setSelectedParticipantId}
+        onSelectCourseStudentInstructor={setSelectedCourseStudentInstructorId}
       />
 
       <PrivateChatPanel
         enrollment={enrollment}
-        selectedParticipant={selectedParticipant}
+        selectedCourseStudentInstructor={selectedCourseStudentInstructor}
         messages={messages}
         newMessage={newMessage}
         onMessageChange={setNewMessage}
         onSendMessage={handleSendMessage}
-        onBack={() => setSelectedEnrollment(null)}
         onKeyDown={handleKeyDown}
       />
     </div>
