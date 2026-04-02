@@ -28,9 +28,9 @@ const ChatMessages = React.memo(function ChatMessages({
   return (
     <ScrollArea ref={scrollAreaRef} className="min-h-0 flex-1 px-4 py-6">
       <div className="space-y-6">
-        {mergedMessages.map((msg) => (
+        {mergedMessages.map((msg, i) => (
           <div
-            key={msg._id}
+            key={i}
             className={`flex gap-3 ${
               msg.sender.id === userId ? "justify-end" : "justify-start"
             }`}
